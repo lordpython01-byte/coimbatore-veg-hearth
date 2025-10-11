@@ -23,13 +23,15 @@ const Header = () => {
   };
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/95 backdrop-blur-md shadow-md" : "bg-transparent"
-      }`}
-    >
-      <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="text-2xl font-bold text-primary">
+    <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
+      <nav
+        className={`container mx-auto px-6 py-4 flex items-center justify-between rounded-2xl transition-all duration-300 ${
+          isScrolled
+            ? "bg-background/80 backdrop-blur-xl shadow-lg border border-border/50"
+            : "bg-background/10 backdrop-blur-md border border-white/10"
+        }`}
+      >
+        <div className={`text-2xl font-bold transition-colors ${isScrolled ? "text-primary" : "text-white"}`}>
           Pure Veg Paradise
         </div>
 
@@ -37,37 +39,37 @@ const Header = () => {
         <div className="hidden md:flex items-center gap-6">
           <button
             onClick={() => scrollToSection("hero")}
-            className="text-foreground hover:text-primary transition-colors"
+            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Home
           </button>
           <button
             onClick={() => scrollToSection("catering")}
-            className="text-foreground hover:text-primary transition-colors"
+            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Restaurant & Catering
           </button>
           <button
             onClick={() => scrollToSection("party-halls")}
-            className="text-foreground hover:text-primary transition-colors"
+            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Party Halls
           </button>
           <button
             onClick={() => scrollToSection("menu")}
-            className="text-foreground hover:text-primary transition-colors"
+            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Menu
           </button>
           <button
             onClick={() => scrollToSection("gallery")}
-            className="text-foreground hover:text-primary transition-colors"
+            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Gallery
           </button>
           <button
             onClick={() => scrollToSection("testimonials")}
-            className="text-foreground hover:text-primary transition-colors"
+            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Reviews
           </button>
@@ -78,7 +80,7 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden"
+          className={`md:hidden ${isScrolled ? "text-foreground" : "text-white"}`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -87,8 +89,8 @@ const Header = () => {
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-background/95 backdrop-blur-md border-t">
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+        <div className="md:hidden bg-background/90 backdrop-blur-xl border-t border-border/50 rounded-b-2xl">
+          <div className="px-6 py-4 flex flex-col gap-4">
             <button
               onClick={() => scrollToSection("hero")}
               className="text-left text-foreground hover:text-primary transition-colors"
