@@ -1,8 +1,35 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { toast } from "@/hooks/use-toast";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import partyHallImage from "@/assets/party-hall.jpg";
 
 const PartyHalls = () => {
+  const [open, setOpen] = useState(false);
+  const [selectedHall, setSelectedHall] = useState<string>("");
+  const [date, setDate] = useState<Date>();
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+
   const features = [
     "Spacious halls accommodating 50-500 guests",
     "Traditional Tamil Nadu decor with modern amenities",
@@ -11,6 +38,36 @@ const PartyHalls = () => {
     "Audio-visual equipment available",
     "Ample parking space",
   ];
+
+  const handleCheckAvailability = () => {
+    if (!selectedHall || !date) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a hall and date",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Simulate availability check
+    setIsAvailable(true);
+    toast({
+      title: "Available!",
+      description: `${selectedHall} is available on ${format(date, "PPP")}`,
+    });
+  };
+
+  const handleBookNow = () => {
+    toast({
+      title: "Booking Successful!",
+      description: "Our team will contact you soon",
+    });
+    // Reset form
+    setOpen(false);
+    setSelectedHall("");
+    setDate(undefined);
+    setIsAvailable(null);
+    setShowCalendar(false);
+  };
 
   return (
     <section id="party-halls" className="py-20">
@@ -45,12 +102,91 @@ const PartyHalls = () => {
                 </li>
               ))}
             </ul>
-            <Button
-              size="lg"
-              className="w-full border-2 border-primary"
-            >
-              Book Your Event
-            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="lg"
+                  className="w-full border-2 border-primary"
+                >
+                  Book Your Event
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Book Your Party Hall</DialogTitle>
+                  <DialogDescription>
+                    Select your preferred hall and date to check availability
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  {/* Hall Selection */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Hall</label>
+                    <Select value={selectedHall} onValueChange={setSelectedHall}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a hall" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Party Hall 1">Party Hall 1 (50-150 guests)</SelectItem>
+                        <SelectItem value="Party Hall 2">Party Hall 2 (150-300 guests)</SelectItem>
+                        <SelectItem value="Party Hall 3">Party Hall 3 (300-500 guests)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Date Selection */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Date</label>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                      onClick={() => setShowCalendar(!showCalendar)}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    {showCalendar && (
+                      <div className="border rounded-lg p-3 bg-background">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={(selectedDate) => {
+                            setDate(selectedDate);
+                            setShowCalendar(false);
+                          }}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Check Availability Button */}
+                  <Button
+                    onClick={handleCheckAvailability}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    Check Availability
+                  </Button>
+
+                  {/* Book Now Button - Only show if available */}
+                  {isAvailable && (
+                    <Button
+                      onClick={handleBookNow}
+                      className="w-full border-2 border-primary"
+                      size="lg"
+                    >
+                      Book Now
+                    </Button>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </Card>
         </div>
       </div>
