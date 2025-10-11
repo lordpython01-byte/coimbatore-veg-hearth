@@ -1,0 +1,138 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+
+const Header = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+      setIsMobileMenuOpen(false);
+    }
+  };
+
+  return (
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? "bg-background/95 backdrop-blur-md shadow-md" : "bg-transparent"
+      }`}
+    >
+      <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="text-2xl font-bold text-primary">
+          Pure Veg Paradise
+        </div>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-6">
+          <button
+            onClick={() => scrollToSection("hero")}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Home
+          </button>
+          <button
+            onClick={() => scrollToSection("catering")}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Restaurant & Catering
+          </button>
+          <button
+            onClick={() => scrollToSection("party-halls")}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Party Halls
+          </button>
+          <button
+            onClick={() => scrollToSection("menu")}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Menu
+          </button>
+          <button
+            onClick={() => scrollToSection("gallery")}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Gallery
+          </button>
+          <button
+            onClick={() => scrollToSection("testimonials")}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            Reviews
+          </button>
+          <Button onClick={() => scrollToSection("review-form")}>
+            Write a Review
+          </Button>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </nav>
+
+      {/* Mobile Navigation */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-background/95 backdrop-blur-md border-t">
+          <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+            <button
+              onClick={() => scrollToSection("hero")}
+              className="text-left text-foreground hover:text-primary transition-colors"
+            >
+              Home
+            </button>
+            <button
+              onClick={() => scrollToSection("catering")}
+              className="text-left text-foreground hover:text-primary transition-colors"
+            >
+              Restaurant & Catering
+            </button>
+            <button
+              onClick={() => scrollToSection("party-halls")}
+              className="text-left text-foreground hover:text-primary transition-colors"
+            >
+              Party Halls
+            </button>
+            <button
+              onClick={() => scrollToSection("menu")}
+              className="text-left text-foreground hover:text-primary transition-colors"
+            >
+              Menu
+            </button>
+            <button
+              onClick={() => scrollToSection("gallery")}
+              className="text-left text-foreground hover:text-primary transition-colors"
+            >
+              Gallery
+            </button>
+            <button
+              onClick={() => scrollToSection("testimonials")}
+              className="text-left text-foreground hover:text-primary transition-colors"
+            >
+              Reviews
+            </button>
+            <Button onClick={() => scrollToSection("review-form")}>
+              Write a Review
+            </Button>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};
+
+export default Header;
