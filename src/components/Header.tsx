@@ -36,7 +36,9 @@ const Header = () => {
           <img 
             src={logo} 
             alt="Annamaye Eatery" 
-            className="h-14 md:h-16 w-auto object-contain"
+            className={`h-12 md:h-14 w-auto object-contain transition-all duration-300 ${
+              isScrolled ? "" : "brightness-0 invert"
+            }`}
           />
         </div>
 
