@@ -1,76 +1,93 @@
-import { Card } from "@/components/ui/card";
-import coffeeImage from "@/assets/coffee.jpg";
-import pongalImage from "@/assets/pongal.jpg";
-import vadaImage from "@/assets/vada.jpg";
-import idliImage from "@/assets/idli.jpg";
-import dosaImage from "@/assets/dosa.jpg";
+import { useRef } from "react";
+import HTMLFlipBook from "react-pageflip";
+import menu1 from "@/assets/menu_1.jpg";
+import menu2 from "@/assets/menu_2.jpg";
+import menu3 from "@/assets/menu_3.jpg";
+import menu4 from "@/assets/menu_4.jpg";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Menu = () => {
-  const specials = [
-    {
-      name: "Filter Coffee",
-      image: coffeeImage,
-      description: "Traditional South Indian filter coffee served in steel tumbler and davara",
-      price: "₹40",
-    },
-    {
-      name: "Ven Pongal",
-      image: pongalImage,
-      description: "Savory rice and lentil dish with ghee, cashews, and pepper",
-      price: "₹80",
-    },
-    {
-      name: "Medu Vada",
-      image: vadaImage,
-      description: "Crispy golden lentil donuts served with chutneys and sambar",
-      price: "₹60",
-    },
-    {
-      name: "Idli",
-      image: idliImage,
-      description: "Soft steamed rice cakes with coconut chutney and sambar",
-      price: "₹50",
-    },
-    {
-      name: "Masala Dosa",
-      image: dosaImage,
-      description: "Crispy rice crepe with spiced potato filling",
-      price: "₹90",
-    },
-  ];
+  const bookRef = useRef<any>(null);
+
+  const menuPages = [menu1, menu2, menu3, menu4];
 
   return (
     <section id="menu" className="py-20 bg-secondary/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary">
-            Today's Special
+            Our Menu
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Authentic Tamil Nadu delicacies prepared fresh daily
+            Explore our authentic Tamil Nadu delicacies - flip through our digital menu
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {specials.map((item, index) => (
-            <Card
-              key={index}
-              className="overflow-hidden hover:shadow-xl transition-shadow border-2 border-border"
+        <div className="flex flex-col items-center">
+          <div className="relative shadow-2xl rounded-lg overflow-hidden">
+            <HTMLFlipBook
+              width={550}
+              height={733}
+              size="stretch"
+              minWidth={300}
+              maxWidth={600}
+              minHeight={400}
+              maxHeight={800}
+              showCover={true}
+              mobileScrollSupport={true}
+              className="flipbook"
+              ref={bookRef}
+              style={{}}
+              startPage={0}
+              drawShadow={true}
+              flippingTime={1000}
+              usePortrait={true}
+              startZIndex={0}
+              autoSize={true}
+              maxShadowOpacity={0.5}
+              clickEventForward={true}
+              useMouseEvents={true}
+              swipeDistance={30}
+              showPageCorners={true}
+              disableFlipByClick={false}
             >
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-64 object-cover"
-              />
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-semibold">{item.name}</h3>
-                  <span className="text-gold font-bold text-lg">{item.price}</span>
+              {menuPages.map((page, index) => (
+                <div key={index} className="page">
+                  <img
+                    src={page}
+                    alt={`Menu page ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <p className="text-muted-foreground">{item.description}</p>
-              </div>
-            </Card>
-          ))}
+              ))}
+            </HTMLFlipBook>
+          </div>
+
+          <div className="flex gap-4 mt-8">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => bookRef.current?.pageFlip().flipPrev()}
+              className="gap-2"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => bookRef.current?.pageFlip().flipNext()}
+              className="gap-2"
+            >
+              Next
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+
+          <p className="text-sm text-muted-foreground mt-6">
+            Click on the corners or use the buttons to flip pages
+          </p>
         </div>
       </div>
     </section>
