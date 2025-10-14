@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/hero-bg.jpg";
 
 const Hero = () => {
   const scrollToSection = (id: string) => {
@@ -12,14 +11,20 @@ const Hero = () => {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex items-center justify-center"
-      style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.6)), url(${heroImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed",
-      }}
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
+      {/* YouTube Video Background */}
+      <div className="absolute inset-0 w-full h-full">
+        <iframe
+          className="absolute top-1/2 left-1/2 w-[177.77vh] h-[56.25vw] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2"
+          src="https://www.youtube.com/embed/KWVBzQv8MJA?autoplay=1&mute=1&loop=1&playlist=KWVBzQv8MJA&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+          allow="autoplay; encrypted-media"
+          title="Background video"
+        />
+      </div>
+      
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/60 z-10" />
       <div className="container mx-auto px-4 text-center text-white z-10">
         <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
           Pure Veg Paradise
