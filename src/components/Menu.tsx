@@ -25,15 +25,15 @@ const Menu = () => {
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="relative shadow-2xl rounded-lg overflow-hidden">
+          <div className="relative shadow-2xl rounded-lg overflow-hidden w-full max-w-[600px] aspect-square">
             <HTMLFlipBook
-              width={550}
-              height={733}
+              width={600}
+              height={600}
               size="stretch"
               minWidth={300}
               maxWidth={600}
-              minHeight={400}
-              maxHeight={800}
+              minHeight={300}
+              maxHeight={600}
               showCover={true}
               mobileScrollSupport={true}
               className="flipbook"
@@ -42,7 +42,7 @@ const Menu = () => {
               startPage={0}
               drawShadow={true}
               flippingTime={1000}
-              usePortrait={true}
+              usePortrait={false}
               startZIndex={0}
               autoSize={true}
               maxShadowOpacity={0.5}
@@ -53,11 +53,11 @@ const Menu = () => {
               disableFlipByClick={false}
             >
               {menuPages.map((page, index) => (
-                <div key={index} className="page">
+                <div key={index} className="page bg-white p-4">
                   <img
                     src={page}
                     alt={`Menu page ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
               ))}
