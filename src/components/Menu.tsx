@@ -25,18 +25,18 @@ const Menu = () => {
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="relative shadow-2xl rounded-lg overflow-hidden w-full max-w-[600px] aspect-square">
+          <div className="relative shadow-2xl rounded-lg overflow-hidden w-full max-w-[95vw] md:max-w-[1000px]">
             <HTMLFlipBook
-              width={600}
+              width={450}
               height={600}
               size="stretch"
-              minWidth={300}
-              maxWidth={600}
+              minWidth={200}
+              maxWidth={500}
               minHeight={300}
-              maxHeight={600}
+              maxHeight={700}
               showCover={true}
               mobileScrollSupport={true}
-              className="flipbook"
+              className="flipbook mx-auto"
               ref={bookRef}
               style={{}}
               startPage={0}
@@ -44,7 +44,7 @@ const Menu = () => {
               flippingTime={1000}
               usePortrait={false}
               startZIndex={0}
-              autoSize={true}
+              autoSize={false}
               maxShadowOpacity={0.5}
               clickEventForward={true}
               useMouseEvents={true}
@@ -53,12 +53,14 @@ const Menu = () => {
               disableFlipByClick={false}
             >
               {menuPages.map((page, index) => (
-                <div key={index} className="page bg-white p-4">
-                  <img
-                    src={page}
-                    alt={`Menu page ${index + 1}`}
-                    className="w-full h-full object-contain"
-                  />
+                <div key={index} className="page bg-white">
+                  <div className="w-full h-full p-2 md:p-4">
+                    <img
+                      src={page}
+                      alt={`Menu page ${index + 1}`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                 </div>
               ))}
             </HTMLFlipBook>
@@ -72,7 +74,7 @@ const Menu = () => {
               className="gap-2"
             >
               <ChevronLeft className="w-5 h-5" />
-              Previous
+              <span className="hidden sm:inline">Previous</span>
             </Button>
             <Button
               variant="outline"
@@ -80,12 +82,12 @@ const Menu = () => {
               onClick={() => bookRef.current?.pageFlip().flipNext()}
               className="gap-2"
             >
-              Next
+              <span className="hidden sm:inline">Next</span>
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
 
-          <p className="text-sm text-muted-foreground mt-6">
+          <p className="text-sm text-muted-foreground mt-6 text-center px-4">
             Click on the corners or use the buttons to flip pages
           </p>
         </div>
