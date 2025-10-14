@@ -24,39 +24,28 @@ const Menu = () => {
           </p>
         </div>
 
-        <div className="flex items-center justify-center gap-4 md:gap-8 relative">
-          {/* Previous Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => bookRef.current?.pageFlip().flipPrev()}
-            className="h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-background hidden md:flex"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </Button>
-
-          {/* Book Container */}
-          <div className="relative bg-white shadow-2xl rounded-lg p-4 md:p-8 w-full max-w-[95vw] md:max-w-[1100px]">
+        <div className="flex flex-col items-center">
+          <div className="relative shadow-2xl rounded-lg overflow-hidden w-full max-w-[95vw] md:max-w-[1000px]">
             <HTMLFlipBook
-              width={500}
-              height={650}
+              width={450}
+              height={600}
               size="stretch"
-              minWidth={250}
-              maxWidth={550}
-              minHeight={350}
+              minWidth={200}
+              maxWidth={500}
+              minHeight={300}
               maxHeight={700}
-              showCover={false}
+              showCover={true}
               mobileScrollSupport={true}
               className="flipbook mx-auto"
               ref={bookRef}
               style={{}}
               startPage={0}
               drawShadow={true}
-              flippingTime={800}
+              flippingTime={1000}
               usePortrait={false}
               startZIndex={0}
               autoSize={false}
-              maxShadowOpacity={0.3}
+              maxShadowOpacity={0.5}
               clickEventForward={true}
               useMouseEvents={true}
               swipeDistance={30}
@@ -64,8 +53,8 @@ const Menu = () => {
               disableFlipByClick={false}
             >
               {menuPages.map((page, index) => (
-                <div key={index} className="page bg-white border-r border-gray-200 last:border-r-0">
-                  <div className="w-full h-full p-3 md:p-6 flex items-center justify-center">
+                <div key={index} className="page bg-white">
+                  <div className="w-full h-full p-2 md:p-4">
                     <img
                       src={page}
                       alt={`Menu page ${index + 1}`}
@@ -77,42 +66,31 @@ const Menu = () => {
             </HTMLFlipBook>
           </div>
 
-          {/* Next Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => bookRef.current?.pageFlip().flipNext()}
-            className="h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-background hidden md:flex"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </Button>
-        </div>
+          <div className="flex gap-4 mt-8">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => bookRef.current?.pageFlip().flipPrev()}
+              className="gap-2"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Previous</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => bookRef.current?.pageFlip().flipNext()}
+              className="gap-2"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
 
-        {/* Mobile Navigation */}
-        <div className="flex gap-4 mt-8 justify-center md:hidden">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => bookRef.current?.pageFlip().flipPrev()}
-            className="gap-2"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => bookRef.current?.pageFlip().flipNext()}
-            className="gap-2"
-          >
-            Next
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+          <p className="text-sm text-muted-foreground mt-6 text-center px-4">
+            Click on the corners or use the buttons to flip pages
+          </p>
         </div>
-
-        <p className="text-sm text-muted-foreground mt-6 text-center px-4">
-          Click on the page edges to flip or use the arrow buttons
-        </p>
       </div>
     </section>
   );
