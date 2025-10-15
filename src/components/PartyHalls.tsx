@@ -70,13 +70,16 @@ const PartyHalls = () => {
   };
 
   return (
-    <section id="party-halls" className="py-20">
+    <section id="party-halls" className="py-20 bg-cream">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary">
+        <div className="text-center mb-16">
+          <div className="inline-block mb-4">
+            <span className="text-accent font-semibold text-sm tracking-wider uppercase">Celebrations</span>
+          </div>
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-primary">
             Premium Party Halls
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Celebrate your special moments in our elegant party halls
           </p>
         </div>

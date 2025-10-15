@@ -48,20 +48,25 @@ const Testimonials = () => {
   ];
 
   return (
-    <section id="testimonials" className="py-20 bg-secondary/20">
+    <section id="testimonials" className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary">
+        <div className="text-center mb-16">
+          <div className="inline-block mb-4">
+            <span className="text-accent font-semibold text-sm tracking-wider uppercase">
+              Customer Love
+            </span>
+          </div>
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-primary">
             What Our Guests Say
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Read reviews from our satisfied customers
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {reviews.map((review, index) => (
-            <Card key={index} className="p-6 border-2 border-border">
+            <Card key={index} className="p-6 border-2 border-border hover:border-accent hover:shadow-2xl transition-all duration-300 bg-card">
               <div className="flex mb-3">
                 {[...Array(review.rating)].map((_, i) => (
                   <Star key={i} className="w-5 h-5 fill-gold text-gold" />
@@ -69,7 +74,7 @@ const Testimonials = () => {
               </div>
               <p className="text-muted-foreground mb-4 italic">"{review.review}"</p>
               <div className="border-t pt-4">
-                <p className="font-semibold">{review.name}</p>
+                <p className="font-semibold text-foreground">{review.name}</p>
                 <p className="text-sm text-muted-foreground">{review.location}</p>
               </div>
             </Card>

@@ -23,19 +23,24 @@ const ReviewForm = () => {
   };
 
   return (
-    <section id="review-form" className="py-20">
+    <section id="review-form" className="py-20 bg-cream">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary">
+            <div className="inline-block mb-4">
+              <span className="text-accent font-semibold text-sm tracking-wider uppercase">
+                Share Your Experience
+              </span>
+            </div>
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 text-primary">
               Write a Review
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg md:text-xl text-muted-foreground">
               Share your experience with us
             </p>
           </div>
 
-          <Card className="p-8 border-2 border-primary/20">
+          <Card className="p-8 border-2 border-primary/20 shadow-xl bg-card">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-2">Your Name</label>

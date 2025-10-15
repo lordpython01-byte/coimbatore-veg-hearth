@@ -42,16 +42,27 @@ const Menu = () => {
   ];
 
   return (
-    <section id="menu" className="py-20 bg-gradient-to-br from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+    <section id="menu" className="py-20 bg-background relative overflow-hidden">
       {/* Background Kolam Pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-3">
         <KolamPattern />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
-          {/* Decorative top border */}
-          <div className="flex justify-center items-center gap-3 mb-6">
+          <div className="inline-block mb-4">
+            <span className="text-accent font-semibold text-sm tracking-wider uppercase">Delicious Offerings</span>
+          </div>
+          
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-primary animate-fade-in">
+            Our Menu
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
+            Explore our authentic Tamil Nadu delicacies
+          </p>
+          
+          {/* Decorative border */}
+          <div className="flex justify-center items-center gap-3">
             <div className="h-px w-16 bg-gradient-to-r from-transparent to-primary"></div>
             <div className="flex gap-1">
               {[...Array(5)].map((_, i) => (
@@ -60,13 +71,6 @@ const Menu = () => {
             </div>
             <div className="h-px w-16 bg-gradient-to-l from-transparent to-primary"></div>
           </div>
-
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 text-primary animate-fade-in">
-            Our Menu
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
-            Explore our authentic Tamil Nadu delicacies
-          </p>
           
           {/* Decorative bottom border */}
           <div className="flex justify-center items-center gap-3">

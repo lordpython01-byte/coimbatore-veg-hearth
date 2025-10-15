@@ -28,8 +28,8 @@ const Header = () => {
       <nav
         className={`container mx-auto px-6 py-4 flex items-center justify-between rounded-2xl transition-all duration-300 ${
           isScrolled
-            ? "bg-background/80 backdrop-blur-xl shadow-lg border border-border/50"
-            : "bg-background/10 backdrop-blur-md border border-white/10"
+            ? "bg-background/95 backdrop-blur-xl shadow-2xl border-2 border-border"
+            : "bg-background/10 backdrop-blur-md border-2 border-white/10"
         }`}
       >
         <div className="flex items-center">
