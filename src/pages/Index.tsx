@@ -5,6 +5,7 @@ import PartyHalls from "@/components/PartyHalls";
 import Menu from "@/components/Menu";
 import Gallery from "@/components/Gallery";
 import Testimonials from "@/components/Testimonials";
+import VideoReviews from "@/components/VideoReviews";
 import ReviewForm from "@/components/ReviewForm";
 import Footer from "@/components/Footer";
 
@@ -18,6 +19,7 @@ const Index = () => {
       <Menu />
       <Gallery />
       <Testimonials />
+      <VideoReviews />
       <ReviewForm />
       <Footer />
     </div>
