@@ -10,7 +10,7 @@ const Footer = () => {
             <img 
               src={logo} 
               alt="Annamaye Eatery" 
-              className="h-12 w-auto object-contain mb-4"
+              className="h-12 w-auto object-contain mb-4 filter brightness-0 invert"
             />
             <p className="text-primary-foreground/80">
               Authentic Tamil Nadu vegetarian cuisine in the heart of Coimbatore.
