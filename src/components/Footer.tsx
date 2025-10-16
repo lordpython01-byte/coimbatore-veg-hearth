@@ -76,9 +76,9 @@ const Footer = () => {
     href="https://zouiscorp.in"
     target="_blank"
     rel="noopener noreferrer"
-    className="inline-block mt-4 px-3 py-1 bg-green-600 text-white font-bold rounded hover:bg-green-700 transition-colors"
+    className="font-bold text-white mt-2 inline-block"
   >
-    Developed by Zouis corp.
+    Developed by Zouiscorp
   </a>
 </div>
       </div>
