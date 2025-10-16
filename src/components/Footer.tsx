@@ -70,9 +70,17 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-primary-foreground/20 pt-8 text-center text-primary-foreground/80">
-          <p>&copy; 2025 Pure Veg Paradise. All rights reserved.</p>
-        </div>
+<div className="border-t border-primary-foreground/20 pt-8 text-center text-primary-foreground/80">
+  <p>&copy; 2025 Pure Veg Paradise. All rights reserved.</p>
+  <a
+    href="https://zouiscorp.in"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-block mt-4 px-3 py-1 bg-green-600 text-white font-bold rounded hover:bg-green-700 transition-colors"
+  >
+    Developed by Zouis corp.
+  </a>
+</div>
       </div>
     </footer>
   );
