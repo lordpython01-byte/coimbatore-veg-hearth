@@ -1,12 +1,13 @@
-import { useState } from "react";
-import menu1 from "@/assets/menu_1.jpg";
-import menu2 from "@/assets/menu_2.jpg";
-import menu3 from "@/assets/menu_3.jpg";
-import menu4 from "@/assets/menu_4.jpg";
-import { Maximize2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import dishIdli from "@/assets/dish-idli.jpg";
+import dishMasalaDosa from "@/assets/dish-masala-dosa.jpg";
+import dishVada from "@/assets/dish-vada.jpg";
+import dishPongal from "@/assets/dish-pongal.jpg";
+import dishSambarRice from "@/assets/dish-sambar-rice.jpg";
+import { ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 const KolamPattern = () => (
   <svg className="absolute inset-0 w-full h-full opacity-20 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
@@ -32,14 +33,66 @@ const KolamCorner = ({ className = "" }: { className?: string }) => (
 );
 
 const Menu = () => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const [visibleCards, setVisibleCards] = useState<boolean[]>([]);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const menuPages = [
-    { image: menu1, title: "Breakfast Specials", page: 1 },
-    { image: menu2, title: "Main Course", page: 2 },
-    { image: menu3, title: "Appetizers & Snacks", page: 3 },
-    { image: menu4, title: "Beverages & Desserts", page: 4 },
+  const dishes = [
+    { 
+      image: dishIdli, 
+      title: "Soft Idli", 
+      description: "Fluffy steamed rice cakes served with coconut chutney and sambar",
+      price: "₹40"
+    },
+    { 
+      image: dishMasalaDosa, 
+      title: "Masala Dosa", 
+      description: "Crispy golden dosa filled with spiced potato masala",
+      price: "₹60"
+    },
+    { 
+      image: dishVada, 
+      title: "Medu Vada", 
+      description: "Crispy fried lentil donuts, a perfect tea-time snack",
+      price: "₹45"
+    },
+    { 
+      image: dishPongal, 
+      title: "Ven Pongal", 
+      description: "Comforting rice and lentil porridge with ghee and spices",
+      price: "₹50"
+    },
+    { 
+      image: dishSambarRice, 
+      title: "Sambar Rice", 
+      description: "Wholesome rice mixed with flavorful sambar and vegetables",
+      price: "₹55"
+    },
   ];
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const index = cardRefs.current.indexOf(entry.target as HTMLDivElement);
+          if (index !== -1 && entry.isIntersecting) {
+            setVisibleCards((prev) => {
+              const newVisible = [...prev];
+              newVisible[index] = true;
+              return newVisible;
+            });
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section id="menu" className="py-20 bg-background relative overflow-hidden">
@@ -84,116 +137,104 @@ const Menu = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10">
-          {menuPages.map((menu, index) => (
-            <div
-              key={index}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Traditional frame wrapper */}
-              <div className="relative p-4 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 rounded-lg">
-                {/* Kolam corner decorations */}
-                <KolamCorner className="absolute top-1 left-1 text-primary" />
-                <KolamCorner className="absolute top-1 right-1 text-primary transform rotate-90" />
-                <KolamCorner className="absolute bottom-1 left-1 text-accent transform -rotate-90" />
-                <KolamCorner className="absolute bottom-1 right-1 text-accent transform rotate-180" />
+        <div className="space-y-8 md:space-y-12 max-w-4xl mx-auto">
+          {dishes.map((dish, index) => {
+            const isLeft = index % 2 === 0;
+            return (
+              <div
+                key={index}
+                ref={(el) => (cardRefs.current[index] = el)}
+                className={`transition-all duration-700 ${
+                  visibleCards[index]
+                    ? 'opacity-100 translate-x-0'
+                    : `opacity-0 ${isLeft ? '-translate-x-20' : 'translate-x-20'}`
+                }`}
+              >
+                {/* Traditional frame wrapper */}
+                <div className="relative p-4 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 rounded-lg">
+                  {/* Kolam corner decorations */}
+                  <KolamCorner className="absolute top-1 left-1 text-primary" />
+                  <KolamCorner className="absolute top-1 right-1 text-primary transform rotate-90" />
+                  <KolamCorner className="absolute bottom-1 left-1 text-accent transform -rotate-90" />
+                  <KolamCorner className="absolute bottom-1 right-1 text-accent transform rotate-180" />
 
-                {/* Decorative border lines */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-30"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-30"></div>
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-primary to-transparent opacity-30"></div>
-                <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-accent to-transparent opacity-30"></div>
+                  {/* Decorative border lines */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-30"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-30"></div>
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-primary to-transparent opacity-30"></div>
+                  <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-accent to-transparent opacity-30"></div>
 
-                <Card className="group relative overflow-hidden border-2 border-primary/30 hover:border-primary transition-all duration-500 hover:shadow-2xl hover:shadow-primary/30 cursor-pointer bg-card/95 backdrop-blur-sm">
-                  <CardContent className="p-0 relative">
-                    <div className="relative overflow-hidden aspect-[3/4]">
-                      {/* Inner decorative frame */}
-                      <div className="absolute inset-0 z-10 pointer-events-none">
-                        <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-brown-dark/80 to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-brown-dark/95 via-brown-dark/60 to-transparent"></div>
-                      </div>
+                  <Card className="group relative overflow-hidden border-2 border-primary/30 hover:border-primary transition-all duration-500 hover:shadow-2xl hover:shadow-primary/30 bg-card/95 backdrop-blur-sm">
+                    <CardContent className="p-0 relative">
+                      <div className="grid md:grid-cols-2 gap-0">
+                        {/* Image Section */}
+                        <div className="relative overflow-hidden aspect-[4/3] md:aspect-auto">
+                          <div className="absolute inset-0 z-10 pointer-events-none">
+                            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-brown-dark/80 to-transparent"></div>
+                            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-brown-dark/80 to-transparent"></div>
+                          </div>
 
-                      <img
-                        src={menu.image}
-                        alt={menu.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
+                          <img
+                            src={dish.image}
+                            alt={dish.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                        </div>
 
-                      {/* Page number badge */}
-                      <div className="absolute top-3 left-3 z-20">
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-primary/20 blur-md"></div>
-                          <div className="relative bg-primary text-primary-foreground font-bold text-xs px-3 py-1.5 rounded-full border-2 border-primary-foreground/20">
-                            PAGE {menu.page}
+                        {/* Content Section */}
+                        <div className="p-6 md:p-8 flex flex-col justify-center bg-gradient-to-br from-card via-card to-accent/5">
+                          <div className="mb-4">
+                            <span className="inline-block px-3 py-1 bg-accent/20 text-accent text-xs font-semibold rounded-full border border-accent/30">
+                              Pure Veg
+                            </span>
+                          </div>
+                          
+                          <h3 className="text-2xl md:text-3xl font-bold mb-3 text-primary">
+                            {dish.title}
+                          </h3>
+                          
+                          <p className="text-muted-foreground mb-4 leading-relaxed">
+                            {dish.description}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mt-auto pt-4 border-t border-border">
+                            <span className="text-2xl font-bold text-primary">
+                              {dish.price}
+                            </span>
+                            <div className="flex gap-2">
+                              {[...Array(3)].map((_, i) => (
+                                <div key={i} className="w-2 h-2 rotate-45 bg-accent/60"></div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
-
-                      {/* Zoom button */}
-                      <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <Button
-                          size="icon"
-                          variant="secondary"
-                          className="h-9 w-9 rounded-full shadow-lg"
-                          onClick={() => setSelectedImage(menu.image)}
-                        >
-                          <Maximize2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      {/* Title section */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                        <div className="bg-gradient-to-r from-primary via-primary to-accent p-3 rounded-lg border border-primary-foreground/10">
-                          <h3 className="text-primary-foreground font-bold text-lg md:text-xl leading-tight text-center">
-                            {menu.title}
-                          </h3>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        <div className="text-center mt-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-card/50 backdrop-blur-sm rounded-full border border-border">
-            <div className="flex gap-1">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="w-1 h-1 rounded-full bg-accent animate-pulse" style={{ animationDelay: `${i * 200}ms` }}></div>
-              ))}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Click on any card to view full menu
-            </p>
-            <div className="flex gap-1">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="w-1 h-1 rounded-full bg-accent animate-pulse" style={{ animationDelay: `${i * 200}ms` }}></div>
-              ))}
-            </div>
-          </div>
+        <div className="text-center mt-16">
+          <Button
+            size="lg"
+            onClick={() => navigate('/full-menu')}
+            className="group relative overflow-hidden bg-gradient-to-r from-primary to-accent hover:from-primary-glow hover:to-accent text-primary-foreground font-bold text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              View Full Menu
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </Button>
+          
+          <p className="text-sm text-muted-foreground mt-4">
+            Discover all our authentic Tamil Nadu delicacies
+          </p>
         </div>
       </div>
-
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="max-w-5xl w-full p-6 bg-card border-4 border-primary/30">
-          <div className="relative">
-            {/* Decorative corners for dialog */}
-            <KolamCorner className="absolute -top-2 -left-2 text-primary w-8 h-8" />
-            <KolamCorner className="absolute -top-2 -right-2 text-primary w-8 h-8 rotate-90" />
-            <KolamCorner className="absolute -bottom-2 -left-2 text-accent w-8 h-8 -rotate-90" />
-            <KolamCorner className="absolute -bottom-2 -right-2 text-accent w-8 h-8 rotate-180" />
-            
-            <img
-              src={selectedImage || ""}
-              alt="Menu detail"
-              className="w-full h-auto rounded-lg shadow-2xl"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 };
