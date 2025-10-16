@@ -119,7 +119,7 @@ const VideoCard = ({
   totalCards: number;
   isCenter: boolean;
 }) => {
-  const videoRef = useRef<HTMLIFrameElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   const getTransform = () => {
@@ -164,24 +164,23 @@ const VideoCard = ({
     setIsVisible(isCenter);
   }, [isCenter]);
 
-  const getEmbedUrl = (url: string) => {
-    if (url.includes('youtube.com/shorts/')) {
-      const videoId = url.split('shorts/')[1]?.split('?')[0];
-      return `https://www.youtube.com/embed/${videoId}?autoplay=${isVisible ? 1 : 0}&mute=1&loop=1&playlist=${videoId}`;
-    }
-    if (url.includes('youtube.com/watch?v=')) {
-      const videoId = url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}?autoplay=${isVisible ? 1 : 0}&mute=1&loop=1&playlist=${videoId}`;
-    }
-    if (url.includes('youtu.be/')) {
-      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-      return `https://www.youtube.com/embed/${videoId}?autoplay=${isVisible ? 1 : 0}&mute=1&loop=1&playlist=${videoId}`;
-    }
-    if (url.includes('instagram.com')) {
-      return `${url}/embed`;
-    }
-    return url;
+  const isVideoFile = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg)$/i) || !url.includes('youtube') && !url.includes('instagram');
   };
+
+  useEffect(() => {
+    if (!isVideoFile(review.video_url)) return;
+
+    const video = videoRef.current as HTMLVideoElement;
+    if (!video) return;
+
+    if (isCenter) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+      video.currentTime = 0;
+    }
+  }, [isCenter, review.video_url]);
 
   return (
     <div
@@ -195,13 +194,14 @@ const VideoCard = ({
     >
       <Card className="overflow-hidden border-4 border-background shadow-2xl bg-black relative">
         <div className="w-[280px] h-[500px] md:w-[320px] md:h-[570px] relative">
-          <iframe
-            ref={videoRef}
-            src={getEmbedUrl(review.video_url)}
+          <video
+            ref={videoRef as any}
+            src={review.video_url}
             className="w-full h-full object-cover"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            loading="lazy"
+            loop
+            muted
+            playsInline
+            controls={false}
           />
 
           <div className="absolute top-4 -left-12 h-full flex items-center">
