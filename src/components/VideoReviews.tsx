@@ -1,172 +1,230 @@
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { supabase } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
+
+interface VideoReview {
+  id: string;
+  reviewer_name: string;
+  reviewer_role: string;
+  video_url: string;
+  thumbnail_url?: string;
+  display_order: number;
+}
 
 const VideoReviews = () => {
-  const videoReviews = [
-    {
-      id: 1,
-      name: "Lakshmi Priya",
-      role: "Food Blogger",
-      videoUrl: "/hero-video.mp4",
-      thumbnail: "/placeholder.svg",
+  const { data: videoReviews = [], isLoading } = useQuery({
+    queryKey: ['food-review-videos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('food_review_videos')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      return data as VideoReview[];
     },
-    {
-      id: 2,
-      name: "Rajesh Kumar",
-      role: "Regular Customer",
-      videoUrl: "/hero-video.mp4",
-      thumbnail: "/placeholder.svg",
-    },
-    {
-      id: 3,
-      name: "Meena Sundaram",
-      role: "Wedding Host",
-      videoUrl: "/hero-video.mp4",
-      thumbnail: "/placeholder.svg",
-    },
-    {
-      id: 4,
-      name: "Venkatesh Iyer",
-      role: "Corporate Client",
-      videoUrl: "/hero-video.mp4",
-      thumbnail: "/placeholder.svg",
-    },
-  ];
+  });
+
+  const [centerIndex, setCenterIndex] = useState(0);
+
+  useEffect(() => {
+    if (videoReviews.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCenterIndex((prev) => (prev + 1) % videoReviews.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [videoReviews.length]);
+
+  if (isLoading) {
+    return (
+      <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-muted-foreground">Loading videos...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (videoReviews.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="py-20 bg-muted/30">
+    <section className="py-20 bg-gradient-to-b from-background to-muted/30 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <div className="inline-block mb-4">
             <span className="text-accent font-semibold text-sm tracking-wider uppercase">
-              Video Reviews
+              Tamil Food Reviews
             </span>
           </div>
           <h2 className="text-4xl md:text-6xl font-bold mb-6 text-primary">
-            Hear From Our Guests
+            Watch Our Video Reviews
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Watch what our customers have to say about their experience
+            See what Tamil food bloggers and customers say about our authentic South Indian cuisine
           </p>
         </div>
 
-        <Carousel
-          opts={{
-            align: "center",
-            loop: true,
-          }}
-          className="w-full max-w-6xl mx-auto"
-        >
-          <CarouselContent>
-            {videoReviews.map((review) => (
-              <CarouselItem key={review.id} className="md:basis-1/2 lg:basis-1/3">
-                <VideoCard review={review} />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="hidden md:flex" />
-          <CarouselNext className="hidden md:flex" />
-        </Carousel>
+        <div className="relative flex items-center justify-center min-h-[600px]">
+          <div className="absolute inset-0 flex items-center justify-center">
+            {videoReviews.map((review, index) => {
+              const position = (index - centerIndex + videoReviews.length) % videoReviews.length;
+              return (
+                <VideoCard
+                  key={review.id}
+                  review={review}
+                  position={position}
+                  totalCards={videoReviews.length}
+                  isCenter={position === 0}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex justify-center mt-8 gap-2">
+          {videoReviews.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCenterIndex(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === centerIndex
+                  ? 'bg-accent w-8'
+                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+              }`}
+              aria-label={`Go to video ${index + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
 };
 
-const VideoCard = ({ review }: { review: any }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+const VideoCard = ({
+  review,
+  position,
+  totalCards,
+  isCenter
+}: {
+  review: VideoReview;
+  position: number;
+  totalCards: number;
+  isCenter: boolean;
+}) => {
+  const videoRef = useRef<HTMLIFrameElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  const getTransform = () => {
+    if (position === 0) {
+      return 'translateX(0) scale(1) rotateY(0deg)';
+    }
+
+    const maxVisible = Math.min(3, Math.floor(totalCards / 2));
+
+    if (position <= maxVisible) {
+      const offset = position * 80;
+      const scale = 1 - position * 0.15;
+      const rotateY = position * -8;
+      return `translateX(${offset}px) scale(${scale}) rotateY(${rotateY}deg)`;
+    } else if (position >= totalCards - maxVisible) {
+      const reversePosition = totalCards - position;
+      const offset = -reversePosition * 80;
+      const scale = 1 - reversePosition * 0.15;
+      const rotateY = reversePosition * 8;
+      return `translateX(${offset}px) scale(${scale}) rotateY(${rotateY}deg)`;
+    }
+
+    return 'translateX(0) scale(0.5) rotateY(0deg)';
+  };
+
+  const getZIndex = () => {
+    if (position === 0) return 50;
+    const maxVisible = Math.min(3, Math.floor(totalCards / 2));
+    if (position <= maxVisible) return 50 - position;
+    if (position >= totalCards - maxVisible) return 50 - (totalCards - position);
+    return 0;
+  };
+
+  const getOpacity = () => {
+    if (position === 0) return 1;
+    const maxVisible = Math.min(3, Math.floor(totalCards / 2));
+    if (position <= maxVisible || position >= totalCards - maxVisible) return 1;
+    return 0;
+  };
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    setIsVisible(isCenter);
+  }, [isCenter]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            video.play().catch(() => {
-              // Auto-play was prevented
-            });
-            setIsPlaying(true);
-          } else {
-            video.pause();
-            setIsPlaying(false);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    observer.observe(video);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      video.play();
-      setIsPlaying(true);
-    } else {
-      video.pause();
-      setIsPlaying(false);
+  const getEmbedUrl = (url: string) => {
+    if (url.includes('youtube.com/shorts/')) {
+      const videoId = url.split('shorts/')[1]?.split('?')[0];
+      return `https://www.youtube.com/embed/${videoId}?autoplay=${isVisible ? 1 : 0}&mute=1&loop=1&playlist=${videoId}`;
     }
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1]?.split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}?autoplay=${isVisible ? 1 : 0}&mute=1&loop=1&playlist=${videoId}`;
+    }
+    if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+      return `https://www.youtube.com/embed/${videoId}?autoplay=${isVisible ? 1 : 0}&mute=1&loop=1&playlist=${videoId}`;
+    }
+    if (url.includes('instagram.com')) {
+      return `${url}/embed`;
+    }
+    return url;
   };
 
   return (
-    <Card className="overflow-hidden border-2 border-border hover:border-accent transition-all duration-300 group">
-      <div className="relative aspect-[9/16] bg-black">
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          loop
-          muted
-          playsInline
-          poster={review.thumbnail}
-        >
-          <source src={review.videoUrl} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        
-        {/* Play/Pause Overlay */}
-        <div
-          className="absolute inset-0 flex items-center justify-center cursor-pointer"
-          onClick={togglePlay}
-        >
-          <div
-            className={`w-16 h-16 rounded-full bg-white/90 flex items-center justify-center transition-opacity duration-300 ${
-              isPlaying ? "opacity-0 group-hover:opacity-100" : "opacity-100"
-            }`}
-          >
-            {!isPlaying ? (
-              <div className="w-0 h-0 border-l-[20px] border-l-primary border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent ml-1" />
-            ) : (
-              <div className="flex gap-1">
-                <div className="w-1.5 h-6 bg-primary" />
-                <div className="w-1.5 h-6 bg-primary" />
-              </div>
-            )}
+    <div
+      className="absolute transition-all duration-700 ease-out"
+      style={{
+        transform: getTransform(),
+        zIndex: getZIndex(),
+        opacity: getOpacity(),
+        pointerEvents: position === 0 ? 'auto' : 'none',
+      }}
+    >
+      <Card className="overflow-hidden border-4 border-background shadow-2xl bg-black relative">
+        <div className="w-[280px] h-[500px] md:w-[320px] md:h-[570px] relative">
+          <iframe
+            ref={videoRef}
+            src={getEmbedUrl(review.video_url)}
+            className="w-full h-full object-cover"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            loading="lazy"
+          />
+
+          <div className="absolute top-4 -left-12 h-full flex items-center">
+            <div
+              className="text-white font-bold text-2xl tracking-widest"
+              style={{
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed',
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {review.reviewer_name}
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6">
+            <h3 className="text-white font-bold text-xl mb-1">{review.reviewer_name}</h3>
+            <p className="text-white/90 text-sm uppercase tracking-wider">{review.reviewer_role}</p>
           </div>
         </div>
-
-        {/* Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-          <h3 className="text-white font-bold text-lg">{review.name}</h3>
-          <p className="text-white/80 text-sm">{review.role}</p>
-        </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 };
 
