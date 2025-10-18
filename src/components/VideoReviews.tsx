@@ -146,10 +146,10 @@ const VideoCard = ({
   };
 
   const getZIndex = () => {
-    if (position === 0) return 50;
+    if (position === 0) return 30;
     const maxVisible = Math.min(3, Math.floor(totalCards / 2));
-    if (position <= maxVisible) return 50 - position;
-    if (position >= totalCards - maxVisible) return 50 - (totalCards - position);
+    if (position <= maxVisible) return 30 - position;
+    if (position >= totalCards - maxVisible) return 30 - (totalCards - position);
     return 0;
   };
 
