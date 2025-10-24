@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -32,11 +33,13 @@ const Header = () => {
         }`}
       >
         <div className="flex items-center">
-          <h1 className={`text-2xl md:text-3xl font-bold transition-colors ${
-            isScrolled ? "text-primary" : "text-white"
-          }`}>
-            Annamaye Eatery
-          </h1>
+          <img
+            src={logo}
+            alt="Annamaye Eatery"
+            className={`h-12 md:h-14 w-auto object-contain transition-all duration-300 ${
+              isScrolled ? "" : "brightness-0 invert"
+            }`}
+          />
         </div>
 
         {/* Desktop Navigation */}
