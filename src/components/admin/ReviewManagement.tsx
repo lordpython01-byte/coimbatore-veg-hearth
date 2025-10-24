@@ -9,6 +9,9 @@ import { Check, X, Trash2, Star } from 'lucide-react';
 interface Review {
   id: string;
   customer_name: string;
+  email: string;
+  phone: string;
+  location: string;
   rating: number;
   review_text: string;
   is_approved: boolean;
@@ -82,9 +85,31 @@ const ReviewManagement = () => {
                           {review.is_approved ? 'Approved' : 'Pending'}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{review.review_text}</p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {new Date(review.created_at).toLocaleDateString()}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-muted-foreground mb-2">
+                        {review.email && (
+                          <div>
+                            <span className="font-medium">Email:</span> {review.email}
+                          </div>
+                        )}
+                        {review.phone && (
+                          <div>
+                            <span className="font-medium">Phone:</span> {review.phone}
+                          </div>
+                        )}
+                        {review.location && (
+                          <div>
+                            <span className="font-medium">Location:</span> {review.location}
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-medium">Date:</span>{' '}
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-muted-foreground italic border-l-2 border-primary pl-3 mt-2">
+                        "{review.review_text}"
                       </p>
                     </div>
                     <div className="flex gap-2 ml-4">
