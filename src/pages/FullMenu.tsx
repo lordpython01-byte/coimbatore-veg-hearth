@@ -4,19 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import dishIdli from "@/assets/dish-idli.jpg";
-import dishMasalaDosa from "@/assets/dish-masala-dosa.jpg";
-import dishVada from "@/assets/dish-vada.jpg";
-import dishPongal from "@/assets/dish-pongal.jpg";
-import dishSambarRice from "@/assets/dish-sambar-rice.jpg";
+import { supabase } from "@/lib/supabase";
 
-interface Dish {
-  image: string;
-  title: string;
+interface MenuItem {
+  id: string;
+  name: string;
   description: string;
-  category: string;
-  rating?: number;
-  cookingTime?: string;
+  image_url: string;
+  price: number;
+  rating: number;
+  cooking_time: string;
+  category_id: string;
+  category_name?: string;
+}
+
+interface MenuCategory {
+  id: string;
+  name: string;
+  description: string;
 }
 
 const KolamPattern = () => (
@@ -36,113 +41,57 @@ const KolamPattern = () => (
 const FullMenu = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [visibleCards, setVisibleCards] = useState<boolean[]>([]);
+  const [loading, setLoading] = useState(true);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const allDishes: Dish[] = [
-    {
-      image: dishIdli,
-      title: "Soft Idli",
-      description: "Fluffy steamed rice cakes served with coconut chutney and sambar",
-      category: "Breakfast",
-      rating: 4.8,
-      cookingTime: "15 mins"
-    },
-    {
-      image: dishMasalaDosa,
-      title: "Masala Dosa",
-      description: "Crispy golden dosa filled with spiced potato masala",
-      category: "Breakfast",
-      rating: 4.9,
-      cookingTime: "20 mins"
-    },
-    {
-      image: dishVada,
-      title: "Medu Vada",
-      description: "Crispy fried lentil donuts, a perfect tea-time snack",
-      category: "Snacks",
-      rating: 4.7,
-      cookingTime: "18 mins"
-    },
-    {
-      image: dishPongal,
-      title: "Ven Pongal",
-      description: "Comforting rice and lentil porridge with ghee and spices",
-      category: "Breakfast",
-      rating: 4.6,
-      cookingTime: "25 mins"
-    },
-    {
-      image: dishSambarRice,
-      title: "Sambar Rice",
-      description: "Wholesome rice mixed with flavorful sambar and vegetables",
-      category: "Main Course",
-      rating: 4.5,
-      cookingTime: "22 mins"
-    },
-    {
-      image: dishIdli,
-      title: "Rava Idli",
-      description: "Light and fluffy semolina idlis with cashews and ghee",
-      category: "Breakfast",
-      rating: 4.7,
-      cookingTime: "18 mins"
-    },
-    {
-      image: dishMasalaDosa,
-      title: "Ghee Roast Dosa",
-      description: "Paper-thin crispy dosa roasted with pure ghee",
-      category: "Breakfast",
-      rating: 4.9,
-      cookingTime: "15 mins"
-    },
-    {
-      image: dishVada,
-      title: "Mysore Bonda",
-      description: "Soft and fluffy fried fritters with a crispy exterior",
-      category: "Snacks",
-      rating: 4.6,
-      cookingTime: "20 mins"
-    },
-    {
-      image: dishPongal,
-      title: "Sweet Pongal",
-      description: "Traditional sweet made with rice, jaggery, and ghee",
-      category: "Desserts",
-      rating: 4.8,
-      cookingTime: "30 mins"
-    },
-    {
-      image: dishSambarRice,
-      title: "Curd Rice",
-      description: "Cool and refreshing rice mixed with yogurt and tempering",
-      category: "Main Course",
-      rating: 4.5,
-      cookingTime: "12 mins"
-    },
-    {
-      image: dishIdli,
-      title: "Mini Idli",
-      description: "Button-sized idlis tossed in flavorful sambar",
-      category: "Snacks",
-      rating: 4.7,
-      cookingTime: "15 mins"
-    },
-    {
-      image: dishMasalaDosa,
-      title: "Onion Rava Dosa",
-      description: "Crispy semolina crepe topped with caramelized onions",
-      category: "Breakfast",
-      rating: 4.8,
-      cookingTime: "18 mins"
-    },
-  ];
+  useEffect(() => {
+    fetchMenuData();
+  }, []);
 
-  const categories = ["All", "Breakfast", "Main Course", "Snacks", "Desserts"];
+  const fetchMenuData = async () => {
+    try {
+      setLoading(true);
+
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from("menu_categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order");
+
+      if (categoriesError) throw categoriesError;
+
+      const { data: itemsData, error: itemsError } = await supabase
+        .from("menu_items")
+        .select(`
+          *,
+          category:menu_categories(name)
+        `)
+        .eq("is_available", true)
+        .order("display_order");
+
+      if (itemsError) throw itemsError;
+
+      setCategories(categoriesData || []);
+
+      const formattedItems = itemsData?.map(item => ({
+        ...item,
+        category_name: item.category?.name
+      })) || [];
+
+      setMenuItems(formattedItems);
+    } catch (error) {
+      console.error("Error fetching menu data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredDishes = selectedCategory === "All"
-    ? allDishes
-    : allDishes.filter(dish => dish.category === selectedCategory);
+    ? menuItems
+    : menuItems.filter(item => item.category_name === selectedCategory);
 
   useEffect(() => {
     setVisibleCards([]);
@@ -172,6 +121,8 @@ const FullMenu = () => {
 
     return () => observer.disconnect();
   }, [filteredDishes.length]);
+
+  const allCategories = ["All", ...categories.map(cat => cat.name)];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
@@ -210,7 +161,7 @@ const FullMenu = () => {
           </div>
 
           <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {categories.map((category) => (
+            {allCategories.map((category) => (
               <Button
                 key={category}
                 variant={selectedCategory === category ? "default" : "outline"}
@@ -226,77 +177,85 @@ const FullMenu = () => {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {filteredDishes.map((dish, index) => (
-              <div
-                key={index}
-                ref={(el) => (cardRefs.current[index] = el)}
-                className={`transition-all duration-500 ${
-                  visibleCards[index]
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 translate-y-8'
-                }`}
-                style={{ transitionDelay: `${index * 50}ms` }}
-              >
-                <Card className="group overflow-hidden border-2 border-border hover:border-primary transition-all duration-300 hover:shadow-xl hover:-translate-y-2 bg-card h-full">
-                  <CardContent className="p-0 flex flex-col h-full">
-                    <div className="relative overflow-hidden aspect-square">
-                      <div className="absolute top-3 right-3 z-20">
-                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 shadow-lg">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          <span className="text-xs font-semibold text-foreground">
-                            {dish.rating}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
-
-                      <img
-                        src={dish.image}
-                        alt={dish.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-
-                      <div className="absolute bottom-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <Badge variant="secondary" className="text-xs">
-                          {dish.cookingTime}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="p-3 md:p-4 flex flex-col flex-grow">
-                      <h3 className="font-bold text-sm md:text-base mb-2 text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                        {dish.title}
-                      </h3>
-
-                      <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed flex-grow">
-                        {dish.description}
-                      </p>
-
-                      <div className="flex items-center justify-between pt-2 border-t border-border">
-                        <Badge variant="outline" className="text-xs">
-                          {dish.category}
-                        </Badge>
-                        <div className="flex gap-1">
-                          {[...Array(3)].map((_, i) => (
-                            <div key={i} className="w-1 h-1 rounded-full bg-accent"></div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
-
-          {filteredDishes.length === 0 && (
+          {loading ? (
             <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">
-                No dishes found in this category.
-              </p>
+              <p className="text-muted-foreground text-lg">Loading menu...</p>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                {filteredDishes.map((dish, index) => (
+                  <div
+                    key={dish.id}
+                    ref={(el) => (cardRefs.current[index] = el)}
+                    className={`transition-all duration-500 ${
+                      visibleCards[index]
+                        ? 'opacity-100 translate-y-0'
+                        : 'opacity-0 translate-y-8'
+                    }`}
+                    style={{ transitionDelay: `${index * 50}ms` }}
+                  >
+                    <Card className="group overflow-hidden border-2 border-border hover:border-primary transition-all duration-300 hover:shadow-xl hover:-translate-y-2 bg-card h-full">
+                      <CardContent className="p-0 flex flex-col h-full">
+                        <div className="relative overflow-hidden aspect-square">
+                          <div className="absolute top-3 right-3 z-20">
+                            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 shadow-lg">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              <span className="text-xs font-semibold text-foreground">
+                                {dish.rating}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+
+                          <img
+                            src={dish.image_url}
+                            alt={dish.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+
+                          <div className="absolute bottom-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <Badge variant="secondary" className="text-xs">
+                              {dish.cooking_time}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="p-3 md:p-4 flex flex-col flex-grow">
+                          <h3 className="font-bold text-sm md:text-base mb-2 text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                            {dish.name}
+                          </h3>
+
+                          <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed flex-grow">
+                            {dish.description}
+                          </p>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-border">
+                            <Badge variant="outline" className="text-xs">
+                              {dish.category_name}
+                            </Badge>
+                            <div className="flex gap-1">
+                              {[...Array(3)].map((_, i) => (
+                                <div key={i} className="w-1 h-1 rounded-full bg-accent"></div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+
+              {filteredDishes.length === 0 && (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground text-lg">
+                    No dishes found in this category.
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           <div className="text-center mt-16">
