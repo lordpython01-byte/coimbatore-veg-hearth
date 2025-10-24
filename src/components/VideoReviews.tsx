@@ -14,6 +14,8 @@ interface VideoReview {
   thumbnail_url?: string;
   display_order: number;
   video_type?: 'local' | 'youtube';
+  custom_display_duration?: number | null;
+  video_duration?: number;
 }
 
 const VideoReviews = () => {
@@ -33,6 +35,7 @@ const VideoReviews = () => {
 
   const [centerIndex, setCenterIndex] = useState(0);
   const [canAutoAdvance, setCanAutoAdvance] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
 
   const handleVideoEnd = () => {
     setCanAutoAdvance(true);
@@ -48,6 +51,7 @@ const VideoReviews = () => {
     const timeout = setTimeout(() => {
       setCenterIndex((prev) => (prev + 1) % videoReviews.length);
       setCanAutoAdvance(false);
+      setTimeRemaining(0);
     }, 500);
 
     return () => clearTimeout(timeout);
@@ -100,11 +104,22 @@ const VideoReviews = () => {
                   onVideoEnd={handleVideoEnd}
                   onVideoStart={handleVideoStart}
                   onCardChange={() => setCenterIndex(index)}
+                  onTimeUpdate={(remaining) => setTimeRemaining(remaining)}
                 />
               );
             })}
           </div>
         </div>
+
+        {timeRemaining > 0 && (
+          <div className="flex justify-center mt-4">
+            <div className="bg-background/80 backdrop-blur-sm px-4 py-2 rounded-full border border-accent/20 shadow-lg">
+              <p className="text-sm text-muted-foreground">
+                Next video in <span className="font-bold text-accent">{timeRemaining}s</span>
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-center mt-8 gap-2">
           {videoReviews.map((_, index) => (
@@ -132,7 +147,8 @@ const VideoCard = ({
   isCenter,
   onVideoEnd,
   onVideoStart,
-  onCardChange
+  onCardChange,
+  onTimeUpdate
 }: {
   review: VideoReview;
   position: number;
@@ -141,6 +157,7 @@ const VideoCard = ({
   onVideoEnd: () => void;
   onVideoStart: () => void;
   onCardChange: () => void;
+  onTimeUpdate: (remaining: number) => void;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -149,6 +166,9 @@ const VideoCard = ({
   const [isMuted, setIsMuted] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(0);
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
@@ -210,29 +230,68 @@ const VideoCard = ({
   };
 
   useEffect(() => {
-    if (!isVideoFile(review.video_url)) return;
-
-    const video = videoRef.current as HTMLVideoElement;
-    if (!video) return;
+    if (durationTimerRef.current) {
+      clearTimeout(durationTimerRef.current);
+      durationTimerRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    onTimeUpdate(0);
 
     if (isCenter) {
-      video.currentTime = 0;
-      video.play().catch(() => {});
-      setIsPlaying(true);
-      onVideoStart();
+      const displayDuration = review.custom_display_duration || review.video_duration || 30;
+      startTimeRef.current = Date.now();
 
+      if (review.custom_display_duration) {
+        durationTimerRef.current = setTimeout(() => {
+          onVideoEnd();
+        }, review.custom_display_duration * 1000);
+
+        countdownIntervalRef.current = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+          const remaining = Math.max(0, displayDuration - elapsed);
+          onTimeUpdate(remaining);
+
+          if (remaining === 0 && countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+        }, 1000);
+      }
+
+      if (isVideoFile(review.video_url)) {
+        const video = videoRef.current as HTMLVideoElement;
+        if (video) {
+          video.currentTime = 0;
+          video.play().catch(() => {});
+          setIsPlaying(true);
+        }
+      }
+
+      onVideoStart();
       setShowControls(true);
       const timer = setTimeout(() => {
         setShowControls(false);
       }, 3000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        if (durationTimerRef.current) clearTimeout(durationTimerRef.current);
+        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      };
     } else {
-      video.pause();
-      video.currentTime = 0;
-      setIsPlaying(false);
+      if (isVideoFile(review.video_url)) {
+        const video = videoRef.current as HTMLVideoElement;
+        if (video) {
+          video.pause();
+          video.currentTime = 0;
+          setIsPlaying(false);
+        }
+      }
     }
-  }, [isCenter, review.video_url, onVideoStart]);
+  }, [isCenter, review.video_url, review.custom_display_duration, review.video_duration, onVideoStart, onVideoEnd, onTimeUpdate]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -273,7 +332,9 @@ const VideoCard = ({
   };
 
   const handleVideoEnded = () => {
-    onVideoEnd();
+    if (!review.custom_display_duration) {
+      onVideoEnd();
+    }
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {

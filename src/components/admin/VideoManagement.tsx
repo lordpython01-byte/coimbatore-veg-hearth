@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Upload, Copy, Play, Video as VideoIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Copy, Play, Video as VideoIcon, Clock } from 'lucide-react';
 import { validateVideoFile, getVideoMetadata, formatFileSize, formatDuration, copyToClipboard, downloadVideoFile, getVideoFileName, getVideoPath } from '@/lib/videoUploadService';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +25,7 @@ interface VideoReview {
   file_size?: number;
   video_duration?: number;
   original_filename?: string;
+  custom_display_duration?: number | null;
 }
 
 const VideoManagement = () => {
@@ -116,6 +117,14 @@ const VideoManagement = () => {
                   {video.video_duration && (
                     <p className="text-xs text-muted-foreground">Duration: {formatDuration(video.video_duration)}</p>
                   )}
+                  {video.custom_display_duration && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Clock className="w-3 h-3 text-blue-600" />
+                      <p className="text-xs text-blue-600 font-semibold">
+                        Display: {video.custom_display_duration}s (Custom)
+                      </p>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`text-xs px-2 py-1 rounded ${video.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {video.is_active ? 'Active' : 'Inactive'}
@@ -153,7 +162,9 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
     file_size: item?.file_size || 0,
     video_duration: item?.video_duration || 0,
     original_filename: item?.original_filename || '',
+    custom_display_duration: item?.custom_display_duration ?? null,
   });
+  const [usesCustomDuration, setUsesCustomDuration] = useState<boolean>(item?.custom_display_duration != null);
   const [uploadMethod, setUploadMethod] = useState<'upload' | 'url'>(item?.video_type === 'local' ? 'upload' : 'url');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -424,6 +435,70 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
         <Label>Thumbnail URL (Optional)</Label>
         <Input value={formData.thumbnail_url} onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })} />
       </div>
+
+      <div className="space-y-3 border rounded-lg p-4 bg-muted/20">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Card Display Duration
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Control how long this card displays before advancing to the next
+            </p>
+          </div>
+          <Switch
+            checked={usesCustomDuration}
+            onCheckedChange={(checked) => {
+              setUsesCustomDuration(checked);
+              if (!checked) {
+                setFormData({ ...formData, custom_display_duration: null });
+              }
+            }}
+          />
+        </div>
+        {usesCustomDuration && (
+          <div>
+            <Label className="text-xs">Custom Duration (seconds)</Label>
+            <Input
+              type="number"
+              min="5"
+              max="300"
+              value={formData.custom_display_duration || ''}
+              onChange={(e) => {
+                const value = e.target.value === '' ? null : parseInt(e.target.value);
+                setFormData({ ...formData, custom_display_duration: value });
+              }}
+              placeholder="Enter seconds (5-300)"
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Between 5 and 300 seconds. Leave empty to use video's actual duration.
+            </p>
+            {formData.custom_display_duration && formData.video_duration > 0 && (
+              <div className="mt-2 text-xs">
+                {formData.custom_display_duration < formData.video_duration ? (
+                  <p className="text-orange-600">
+                    ⚠️ Card will advance before video ends ({formatDuration(formData.video_duration)} video)
+                  </p>
+                ) : formData.custom_display_duration > formData.video_duration ? (
+                  <p className="text-blue-600">
+                    ℹ️ Card will display longer than video ({formatDuration(formData.video_duration)} video)
+                  </p>
+                ) : (
+                  <p className="text-green-600">✓ Matches video duration</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {!usesCustomDuration && (
+          <p className="text-xs text-muted-foreground italic">
+            Card will advance when video ends (auto duration)
+          </p>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Display Order</Label>
