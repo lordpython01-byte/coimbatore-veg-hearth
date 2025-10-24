@@ -4,12 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Menu as MenuIcon, MapPin, Star, Video, CalendarDays } from 'lucide-react';
+import { LogOut, Menu as MenuIcon, MapPin, Star, Video, CalendarDays, Image } from 'lucide-react';
 import MenuManagement from '@/components/admin/MenuManagement';
 import LocationManagement from '@/components/admin/LocationManagement';
 import ReviewManagement from '@/components/admin/ReviewManagement';
 import VideoManagement from '@/components/admin/VideoManagement';
 import BookingManagement from '@/components/admin/BookingManagement';
+import GalleryManagement from '@/components/admin/GalleryManagement';
 
 const AdminDashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
             <TabsTrigger value="menu" className="flex items-center gap-2">
               <MenuIcon className="w-4 h-4" />
               <span className="hidden sm:inline">Menu</span>
@@ -72,6 +73,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="videos" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">Videos</span>
+            </TabsTrigger>
+            <TabsTrigger value="gallery" className="flex items-center gap-2">
+              <Image className="w-4 h-4" />
+              <span className="hidden sm:inline">Gallery</span>
             </TabsTrigger>
             <TabsTrigger value="bookings" className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
@@ -93,6 +98,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="videos">
             <VideoManagement />
+          </TabsContent>
+
+          <TabsContent value="gallery">
+            <GalleryManagement />
           </TabsContent>
 
           <TabsContent value="bookings">

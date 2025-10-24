@@ -1,17 +1,31 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+
+interface GalleryImage {
+  id: string;
+  image_url: string;
+  alt_text: string;
+  title: string;
+  span_class: string;
+}
 
 const Gallery = () => {
   const [visibleItems, setVisibleItems] = useState<number[]>([]);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const images = [
-    { src: "https://images.unsplash.com/photo-1630383249896-424e482df921?w=800&q=80", alt: "Restaurant interior", span: "md:col-span-2 md:row-span-2" },
-    { src: "https://images.unsplash.com/photo-1630383249896-424e482df921?w=500&q=80", alt: "Masala Dosa", span: "md:col-span-1 md:row-span-1" },
-    { src: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500&q=80", alt: "Soft Idli", span: "md:col-span-1 md:row-span-1" },
-    { src: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&q=80", alt: "Crispy Vada", span: "md:col-span-1 md:row-span-2" },
-    { src: "https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=500&q=80", alt: "Ven Pongal", span: "md:col-span-1 md:row-span-1" },
-    { src: "https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?w=500&q=80", alt: "Filter Coffee", span: "md:col-span-1 md:row-span-1" },
-  ];
+  const { data: images = [], isLoading } = useQuery({
+    queryKey: ['gallery-images'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('gallery_images')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      return data as GalleryImage[];
+    },
+  });
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -34,7 +48,19 @@ const Gallery = () => {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [images]);
+
+  if (isLoading) {
+    return (
+      <section id="gallery" className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-muted-foreground">Loading gallery...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="gallery" className="py-20 bg-background">
@@ -56,11 +82,11 @@ const Gallery = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 auto-rows-[200px] gap-4">
           {images.map((image, index) => (
             <div
-              key={index}
+              key={image.id}
               ref={(el) => (itemRefs.current[index] = el)}
               data-index={index}
               className={`
-                ${image.span}
+                ${image.span_class}
                 group relative overflow-hidden rounded-2xl shadow-lg
                 transform transition-all duration-700 ease-out
                 ${
@@ -75,12 +101,12 @@ const Gallery = () => {
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
               <img
-                src={image.src}
-                alt={image.alt}
+                src={image.image_url}
+                alt={image.alt_text}
                 className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
               />
               <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 z-20">
-                <p className="font-semibold text-lg">{image.alt}</p>
+                <p className="font-semibold text-lg">{image.title || image.alt_text}</p>
               </div>
               <div className="absolute inset-0 border-2 border-primary/0 group-hover:border-primary/50 rounded-2xl transition-all duration-500" />
             </div>

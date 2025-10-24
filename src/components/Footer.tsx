@@ -1,15 +1,14 @@
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Footer = () => {
-  const logoUrl = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&q=80";
-
   return (
     <footer className="bg-primary text-primary-foreground py-16">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
             <img
-              src={logoUrl}
+              src={logo}
               alt="Annamaye Eatery"
               className="h-12 w-auto object-contain mb-4 filter brightness-0 invert"
             />
