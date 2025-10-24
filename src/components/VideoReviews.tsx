@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
+import { Play } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface VideoReview {
   id: string;
@@ -120,9 +122,8 @@ const VideoCard = ({
   isCenter: boolean;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [iframeKey, setIframeKey] = useState(0);
+  const [showYouTubeModal, setShowYouTubeModal] = useState(false);
 
   const getTransform = () => {
     if (position === 0) {
@@ -164,27 +165,21 @@ const VideoCard = ({
 
   useEffect(() => {
     setIsVisible(isCenter);
-    if (isCenter && !isVideoFile(review.video_url)) {
-      setIframeKey(prev => prev + 1);
-    }
-  }, [isCenter, review.video_url]);
+  }, [isCenter]);
 
   const isVideoFile = (url: string) => {
     return url.match(/\.(mp4|webm|ogg)$/i) || !url.includes('youtube') && !url.includes('instagram');
   };
 
-  const getYouTubeEmbedUrl = (url: string) => {
+  const getYouTubeVideoId = (url: string) => {
     const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
     const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
     const youtubeMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+    return shortsMatch?.[1] || watchMatch?.[1] || youtubeMatch?.[1];
+  };
 
-    const videoId = shortsMatch?.[1] || watchMatch?.[1] || youtubeMatch?.[1];
-
-    if (videoId) {
-      return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=${isCenter ? 1 : 0}&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
-    }
-
-    return null;
+  const isYouTubeUrl = (url: string) => {
+    return url.includes('youtube.com') || url.includes('youtu.be');
   };
 
   useEffect(() => {
@@ -223,18 +218,36 @@ const VideoCard = ({
               playsInline
               controls={false}
             />
-          ) : getYouTubeEmbedUrl(review.video_url) ? (
-            <iframe
-              key={`${review.id}-${iframeKey}`}
-              ref={iframeRef}
-              src={getYouTubeEmbedUrl(review.video_url)!}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              style={{ border: 'none' }}
-              loading="lazy"
-            />
+          ) : isYouTubeUrl(review.video_url) ? (
+            <div className="w-full h-full relative bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center p-8 cursor-pointer" onClick={() => setShowYouTubeModal(true)}>
+              <div className="text-center space-y-4">
+                <div className="relative w-32 h-32 mx-auto">
+                  <div className="absolute inset-0 bg-red-600 rounded-full opacity-20 animate-pulse"></div>
+                  <div className="relative bg-red-600 w-full h-full rounded-full flex items-center justify-center hover:bg-red-700 transition-colors">
+                    <Play className="w-12 h-12 text-white ml-1" fill="white" />
+                  </div>
+                </div>
+                <p className="text-white text-lg font-semibold">Watch on YouTube</p>
+                <p className="text-gray-400 text-sm">Click to view</p>
+              </div>
+            </div>
           ) : null}
+
+          {isYouTubeUrl(review.video_url) && (
+            <Dialog open={showYouTubeModal} onOpenChange={setShowYouTubeModal}>
+              <DialogContent className="max-w-3xl p-0 bg-black border-none">
+                <div className="relative" style={{ paddingBottom: '177.78%', maxHeight: '90vh' }}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(review.video_url)}?autoplay=1&mute=0&controls=1&rel=0&modestbranding=1`}
+                    className="absolute inset-0 w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    style={{ border: 'none' }}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
 
           <div className="absolute top-4 -left-12 h-full flex items-center pointer-events-none">
             <div
