@@ -71,7 +71,7 @@ const Menu = () => {
         `)
         .eq("is_available", true)
         .order("display_order")
-        .limit(8);
+        .limit(9);
 
       if (itemsError) throw itemsError;
 
@@ -177,7 +177,7 @@ const Menu = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto relative">
               {filteredItems.map((item, index) => (
                 <div
                   key={item.id}
@@ -186,7 +186,7 @@ const Menu = () => {
                     visibleCards[index]
                       ? 'opacity-100 translate-y-0'
                       : 'opacity-0 translate-y-8'
-                  }`}
+                  } ${index === 8 ? 'relative overflow-hidden' : ''}`}
                   style={{ transitionDelay: `${index * 50}ms` }}
                 >
                   <Card className="group overflow-hidden border-2 border-border hover:border-primary transition-all duration-300 hover:shadow-xl hover:-translate-y-2 bg-card h-full">
@@ -217,9 +217,14 @@ const Menu = () => {
                       </div>
 
                       <div className="p-3 md:p-4 flex flex-col flex-grow">
-                        <h3 className="font-bold text-sm md:text-base mb-2 text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                          {item.name}
-                        </h3>
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-bold text-sm md:text-base text-foreground line-clamp-1 group-hover:text-primary transition-colors flex-1">
+                            {item.name}
+                          </h3>
+                          <span className="font-bold text-primary text-sm md:text-base ml-2 whitespace-nowrap">
+                            ₹{item.price}
+                          </span>
+                        </div>
 
                         <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed flex-grow">
                           {item.description}
@@ -238,6 +243,9 @@ const Menu = () => {
                       </div>
                     </CardContent>
                   </Card>
+                  {index === 8 && (
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background pointer-events-none z-10"></div>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 interface MenuItem {
   id: string;
@@ -126,18 +128,7 @@ const FullMenu = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="gap-2 hover:gap-3 transition-all"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Button>
-        </div>
-      </header>
+      <Header />
 
       <section className="py-12 md:py-20 relative overflow-hidden">
         <div className="absolute inset-0">
@@ -223,9 +214,14 @@ const FullMenu = () => {
                         </div>
 
                         <div className="p-3 md:p-4 flex flex-col flex-grow">
-                          <h3 className="font-bold text-sm md:text-base mb-2 text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                            {dish.name}
-                          </h3>
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-bold text-sm md:text-base text-foreground line-clamp-1 group-hover:text-primary transition-colors flex-1">
+                              {dish.name}
+                            </h3>
+                            <span className="font-bold text-primary text-sm md:text-base ml-2 whitespace-nowrap">
+                              ₹{dish.price}
+                            </span>
+                          </div>
 
                           <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed flex-grow">
                             {dish.description}
@@ -286,6 +282,7 @@ const FullMenu = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };
