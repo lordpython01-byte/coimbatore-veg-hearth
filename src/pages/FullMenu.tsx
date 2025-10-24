@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import dishIdli from "@/assets/dish-idli.jpg";
 import dishMasalaDosa from "@/assets/dish-masala-dosa.jpg";
@@ -10,8 +10,17 @@ import dishVada from "@/assets/dish-vada.jpg";
 import dishPongal from "@/assets/dish-pongal.jpg";
 import dishSambarRice from "@/assets/dish-sambar-rice.jpg";
 
+interface Dish {
+  image: string;
+  title: string;
+  description: string;
+  category: string;
+  rating?: number;
+  cookingTime?: string;
+}
+
 const KolamPattern = () => (
-  <svg className="absolute inset-0 w-full h-full opacity-20 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+  <svg className="absolute inset-0 w-full h-full opacity-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <pattern id="kolam-full" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
         <circle cx="5" cy="5" r="1.5" fill="currentColor" />
@@ -24,64 +33,121 @@ const KolamPattern = () => (
   </svg>
 );
 
-const KolamCorner = ({ className = "" }: { className?: string }) => (
-  <svg className={className} width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M0 0 L20 0 L20 2 L15 2 L15 7 L13 7 L13 4 L10 4 L10 10 L7 10 L7 7 L4 7 L4 13 L2 13 L2 10 L0 10 Z" fill="currentColor"/>
-    <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-    <circle cx="8" cy="16" r="1" fill="currentColor"/>
-    <circle cx="16" cy="8" r="1" fill="currentColor"/>
-  </svg>
-);
-
 const FullMenu = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [visibleCards, setVisibleCards] = useState<boolean[]>([]);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const allDishes = [
-    { 
-      image: dishIdli, 
-      title: "Soft Idli", 
+  const allDishes: Dish[] = [
+    {
+      image: dishIdli,
+      title: "Soft Idli",
       description: "Fluffy steamed rice cakes served with coconut chutney and sambar",
-      price: "₹40",
-      category: "Breakfast"
+      category: "Breakfast",
+      rating: 4.8,
+      cookingTime: "15 mins"
     },
-    { 
-      image: dishMasalaDosa, 
-      title: "Masala Dosa", 
+    {
+      image: dishMasalaDosa,
+      title: "Masala Dosa",
       description: "Crispy golden dosa filled with spiced potato masala",
-      price: "₹60",
-      category: "Breakfast"
+      category: "Breakfast",
+      rating: 4.9,
+      cookingTime: "20 mins"
     },
-    { 
-      image: dishVada, 
-      title: "Medu Vada", 
+    {
+      image: dishVada,
+      title: "Medu Vada",
       description: "Crispy fried lentil donuts, a perfect tea-time snack",
-      price: "₹45",
-      category: "Snacks"
+      category: "Snacks",
+      rating: 4.7,
+      cookingTime: "18 mins"
     },
-    { 
-      image: dishPongal, 
-      title: "Ven Pongal", 
+    {
+      image: dishPongal,
+      title: "Ven Pongal",
       description: "Comforting rice and lentil porridge with ghee and spices",
-      price: "₹50",
-      category: "Breakfast"
+      category: "Breakfast",
+      rating: 4.6,
+      cookingTime: "25 mins"
     },
-    { 
-      image: dishSambarRice, 
-      title: "Sambar Rice", 
+    {
+      image: dishSambarRice,
+      title: "Sambar Rice",
       description: "Wholesome rice mixed with flavorful sambar and vegetables",
-      price: "₹55",
-      category: "Main Course"
+      category: "Main Course",
+      rating: 4.5,
+      cookingTime: "22 mins"
+    },
+    {
+      image: dishIdli,
+      title: "Rava Idli",
+      description: "Light and fluffy semolina idlis with cashews and ghee",
+      category: "Breakfast",
+      rating: 4.7,
+      cookingTime: "18 mins"
+    },
+    {
+      image: dishMasalaDosa,
+      title: "Ghee Roast Dosa",
+      description: "Paper-thin crispy dosa roasted with pure ghee",
+      category: "Breakfast",
+      rating: 4.9,
+      cookingTime: "15 mins"
+    },
+    {
+      image: dishVada,
+      title: "Mysore Bonda",
+      description: "Soft and fluffy fried fritters with a crispy exterior",
+      category: "Snacks",
+      rating: 4.6,
+      cookingTime: "20 mins"
+    },
+    {
+      image: dishPongal,
+      title: "Sweet Pongal",
+      description: "Traditional sweet made with rice, jaggery, and ghee",
+      category: "Desserts",
+      rating: 4.8,
+      cookingTime: "30 mins"
+    },
+    {
+      image: dishSambarRice,
+      title: "Curd Rice",
+      description: "Cool and refreshing rice mixed with yogurt and tempering",
+      category: "Main Course",
+      rating: 4.5,
+      cookingTime: "12 mins"
+    },
+    {
+      image: dishIdli,
+      title: "Mini Idli",
+      description: "Button-sized idlis tossed in flavorful sambar",
+      category: "Snacks",
+      rating: 4.7,
+      cookingTime: "15 mins"
+    },
+    {
+      image: dishMasalaDosa,
+      title: "Onion Rava Dosa",
+      description: "Crispy semolina crepe topped with caramelized onions",
+      category: "Breakfast",
+      rating: 4.8,
+      cookingTime: "18 mins"
     },
   ];
 
-  const filteredDishes = allDishes.filter(dish =>
-    dish.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dish.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dish.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const categories = ["All", "Breakfast", "Main Course", "Snacks", "Desserts"];
+
+  const filteredDishes = selectedCategory === "All"
+    ? allDishes
+    : allDishes.filter(dish => dish.category === selectedCategory);
+
+  useEffect(() => {
+    setVisibleCards([]);
+    cardRefs.current = [];
+  }, [selectedCategory]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -97,7 +163,7 @@ const FullMenu = () => {
           }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.1 }
     );
 
     cardRefs.current.forEach((ref) => {
@@ -108,14 +174,13 @@ const FullMenu = () => {
   }, [filteredDishes.length]);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <Button
             variant="ghost"
             onClick={() => navigate('/')}
-            className="gap-2"
+            className="gap-2 hover:gap-3 transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Home
@@ -123,154 +188,140 @@ const FullMenu = () => {
         </div>
       </header>
 
-      {/* Menu Content */}
-      <section className="py-20 bg-background relative overflow-hidden">
-        {/* Background Kolam Pattern */}
-        <div className="absolute inset-0 opacity-3">
+      <section className="py-12 md:py-20 relative overflow-hidden">
+        <div className="absolute inset-0">
           <KolamPattern />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <div className="inline-block mb-4">
-              <span className="text-accent font-semibold text-sm tracking-wider uppercase">Complete Menu</span>
+              <span className="text-accent font-semibold text-sm tracking-wider uppercase">
+                Complete Menu
+              </span>
             </div>
-            
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-primary animate-fade-in">
-              Full Menu
+
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+              Our Full Menu
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Browse our complete selection of authentic Tamil Nadu cuisine
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Explore our authentic Tamil Nadu delicacies
             </p>
-            
-            {/* Decorative border */}
-            <div className="flex justify-center items-center gap-3 mb-8">
-              <div className="h-px w-16 bg-gradient-to-r from-transparent to-primary"></div>
-              <div className="flex gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="w-2 h-2 rotate-45 bg-primary opacity-60"></div>
-                ))}
-              </div>
-              <div className="h-px w-16 bg-gradient-to-l from-transparent to-primary"></div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="max-w-md mx-auto">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search dishes, categories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-6 text-lg border-2 border-primary/20 focus:border-primary rounded-full"
-                />
-              </div>
-            </div>
           </div>
 
-          <div className="space-y-8 md:space-y-12 max-w-4xl mx-auto">
-            {filteredDishes.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">No dishes found matching your search.</p>
-              </div>
-            ) : (
-              filteredDishes.map((dish, index) => {
-                const isLeft = index % 2 === 0;
-                return (
-                  <div
-                    key={index}
-                    ref={(el) => (cardRefs.current[index] = el)}
-                    className={`transition-all duration-700 ${
-                      visibleCards[index]
-                        ? 'opacity-100 translate-x-0'
-                        : `opacity-0 ${isLeft ? '-translate-x-20' : 'translate-x-20'}`
-                    }`}
-                  >
-                    {/* Traditional frame wrapper */}
-                    <div className="relative p-4 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 rounded-lg">
-                      {/* Kolam corner decorations */}
-                      <KolamCorner className="absolute top-1 left-1 text-primary" />
-                      <KolamCorner className="absolute top-1 right-1 text-primary transform rotate-90" />
-                      <KolamCorner className="absolute bottom-1 left-1 text-accent transform -rotate-90" />
-                      <KolamCorner className="absolute bottom-1 right-1 text-accent transform rotate-180" />
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                onClick={() => setSelectedCategory(category)}
+                className={`rounded-full px-6 py-2 transition-all duration-300 ${
+                  selectedCategory === category
+                    ? "shadow-lg scale-105"
+                    : "hover:scale-105"
+                }`}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
 
-                      {/* Decorative border lines */}
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-30"></div>
-                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-30"></div>
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-primary to-transparent opacity-30"></div>
-                      <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-accent to-transparent opacity-30"></div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+            {filteredDishes.map((dish, index) => (
+              <div
+                key={index}
+                ref={(el) => (cardRefs.current[index] = el)}
+                className={`transition-all duration-500 ${
+                  visibleCards[index]
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 translate-y-8'
+                }`}
+                style={{ transitionDelay: `${index * 50}ms` }}
+              >
+                <Card className="group overflow-hidden border-2 border-border hover:border-primary transition-all duration-300 hover:shadow-xl hover:-translate-y-2 bg-card h-full">
+                  <CardContent className="p-0 flex flex-col h-full">
+                    <div className="relative overflow-hidden aspect-square">
+                      <div className="absolute top-3 right-3 z-20">
+                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 shadow-lg">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <span className="text-xs font-semibold text-foreground">
+                            {dish.rating}
+                          </span>
+                        </div>
+                      </div>
 
-                      <Card className="group relative overflow-hidden border-2 border-primary/30 hover:border-primary transition-all duration-500 hover:shadow-2xl hover:shadow-primary/30 bg-card/95 backdrop-blur-sm">
-                        <CardContent className="p-0 relative">
-                          <div className="grid md:grid-cols-2 gap-0">
-                            {/* Image Section */}
-                            <div className="relative overflow-hidden aspect-[4/3] md:aspect-auto">
-                              <div className="absolute inset-0 z-10 pointer-events-none">
-                                <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-brown-dark/80 to-transparent"></div>
-                                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-brown-dark/80 to-transparent"></div>
-                              </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
 
-                              <img
-                                src={dish.image}
-                                alt={dish.title}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                              />
-                            </div>
+                      <img
+                        src={dish.image}
+                        alt={dish.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
 
-                            {/* Content Section */}
-                            <div className="p-6 md:p-8 flex flex-col justify-center bg-gradient-to-br from-card via-card to-accent/5">
-                              <div className="mb-4 flex gap-2">
-                                <span className="inline-block px-3 py-1 bg-accent/20 text-accent text-xs font-semibold rounded-full border border-accent/30">
-                                  Pure Veg
-                                </span>
-                                <span className="inline-block px-3 py-1 bg-primary/20 text-primary text-xs font-semibold rounded-full border border-primary/30">
-                                  {dish.category}
-                                </span>
-                              </div>
-                              
-                              <h3 className="text-2xl md:text-3xl font-bold mb-3 text-primary">
-                                {dish.title}
-                              </h3>
-                              
-                              <p className="text-muted-foreground mb-4 leading-relaxed">
-                                {dish.description}
-                              </p>
-                              
-                              <div className="flex items-center justify-between mt-auto pt-4 border-t border-border">
-                                <span className="text-2xl font-bold text-primary">
-                                  {dish.price}
-                                </span>
-                                <div className="flex gap-2">
-                                  {[...Array(3)].map((_, i) => (
-                                    <div key={i} className="w-2 h-2 rotate-45 bg-accent/60"></div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <div className="absolute bottom-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Badge variant="secondary" className="text-xs">
+                          {dish.cookingTime}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                );
-              })
-            )}
+
+                    <div className="p-3 md:p-4 flex flex-col flex-grow">
+                      <h3 className="font-bold text-sm md:text-base mb-2 text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                        {dish.title}
+                      </h3>
+
+                      <p className="text-xs md:text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed flex-grow">
+                        {dish.description}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-border">
+                        <Badge variant="outline" className="text-xs">
+                          {dish.category}
+                        </Badge>
+                        <div className="flex gap-1">
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} className="w-1 h-1 rounded-full bg-accent"></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
           </div>
+
+          {filteredDishes.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground text-lg">
+                No dishes found in this category.
+              </p>
+            </div>
+          )}
 
           <div className="text-center mt-16">
-            <div className="inline-flex flex-col items-center gap-4 px-6 py-4 bg-card/50 backdrop-blur-sm rounded-2xl border border-border">
-              <p className="text-muted-foreground">
-                For orders and reservations, please contact us
+            <div className="inline-flex flex-col items-center gap-4 px-8 py-6 bg-card/80 backdrop-blur-sm rounded-2xl border-2 border-border shadow-lg">
+              <h3 className="text-xl font-bold text-foreground">
+                Ready to Order?
+              </h3>
+              <p className="text-muted-foreground max-w-md">
+                Visit any of our locations or contact us for home delivery and catering services
               </p>
-              <div className="flex flex-wrap gap-4 justify-center">
-                <a href="tel:+1234567890" className="text-primary hover:text-accent transition-colors font-semibold">
-                  📞 +123 456 7890
-                </a>
-                <span className="text-border">|</span>
-                <a href="mailto:info@restaurant.com" className="text-primary hover:text-accent transition-colors font-semibold">
-                  ✉️ info@restaurant.com
-                </a>
+              <div className="flex flex-wrap gap-4 justify-center mt-2">
+                <Button
+                  onClick={() => navigate('/#locations')}
+                  variant="default"
+                  className="rounded-full"
+                >
+                  View Locations
+                </Button>
+                <Button
+                  onClick={() => navigate('/#contact')}
+                  variant="outline"
+                  className="rounded-full"
+                >
+                  Contact Us
+                </Button>
               </div>
             </div>
           </div>
