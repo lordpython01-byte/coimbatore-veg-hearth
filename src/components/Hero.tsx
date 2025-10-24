@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroVideo from "@/assets/hero-video.mp4";
+import heroVideo from "@/src/assets/hero-video.mp4";
 
 const Hero = () => {
   const scrollToSection = (id: string) => {
