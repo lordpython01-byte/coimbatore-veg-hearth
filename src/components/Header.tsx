@@ -31,14 +31,14 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
   const shouldUseDarkStyle = isSolid || isScrolled;
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 ${isSolid ? "px-4" : "px-4 pt-4"}`}>
+    <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
       <nav
-        className={`container mx-auto px-6 py-4 flex items-center justify-between transition-all duration-300 ${
+        className={`container mx-auto px-6 py-4 flex items-center justify-between rounded-2xl transition-all duration-300 ${
           isSolid
-            ? "bg-background shadow-md border-b border-border"
+            ? "bg-background/95 backdrop-blur-xl shadow-xl border-2 border-border"
             : isScrolled
-            ? "bg-background/95 backdrop-blur-xl shadow-2xl border-2 border-border rounded-2xl"
-            : "bg-background/10 backdrop-blur-md border-2 border-white/10 rounded-2xl"
+            ? "bg-background/95 backdrop-blur-xl shadow-2xl border-2 border-border"
+            : "bg-background/10 backdrop-blur-md border-2 border-white/10"
         }`}
       >
         <div className="flex items-center">

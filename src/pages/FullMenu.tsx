@@ -130,7 +130,7 @@ const FullMenu = () => {
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       <Header variant="solid" />
 
-      <section className="pt-24 pb-12 md:pt-28 md:pb-20 relative overflow-hidden">
+      <section className="pt-32 pb-12 md:pt-36 md:pb-20 relative overflow-hidden">
         <div className="absolute inset-0">
           <KolamPattern />
         </div>
