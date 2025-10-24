@@ -56,7 +56,7 @@ const VideoReviews = () => {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-muted/30 overflow-hidden">
+    <section className="py-20 bg-gradient-to-b from-background to-muted/30 overflow-hidden relative z-0">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <div className="inline-block mb-4">
@@ -72,8 +72,8 @@ const VideoReviews = () => {
           </p>
         </div>
 
-        <div className="relative flex items-center justify-center min-h-[600px]">
-          <div className="absolute inset-0 flex items-center justify-center">
+        <div className="relative flex items-center justify-center min-h-[600px] isolate">
+          <div className="absolute inset-0 flex items-center justify-center z-0">
             {videoReviews.map((review, index) => {
               const position = (index - centerIndex + videoReviews.length) % videoReviews.length;
               return (
@@ -146,10 +146,10 @@ const VideoCard = ({
   };
 
   const getZIndex = () => {
-    if (position === 0) return 50;
+    if (position === 0) return 30;
     const maxVisible = Math.min(3, Math.floor(totalCards / 2));
-    if (position <= maxVisible) return 50 - position;
-    if (position >= totalCards - maxVisible) return 50 - (totalCards - position);
+    if (position <= maxVisible) return 30 - position;
+    if (position >= totalCards - maxVisible) return 30 - (totalCards - position);
     return 0;
   };
 

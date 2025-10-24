@@ -21,7 +21,7 @@ import { toast } from "@/hooks/use-toast";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import partyHallImage from "@/assets/party-hall.jpg";
+import partyHallImage from "@/assets/dosa.jpg";
 
 const PartyHalls = () => {
   const [open, setOpen] = useState(false);

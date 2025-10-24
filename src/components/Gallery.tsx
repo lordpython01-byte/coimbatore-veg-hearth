@@ -1,17 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import coffeeImage from "@/assets/coffee.jpg";
-import pongalImage from "@/assets/pongal.jpg";
-import vadaImage from "@/assets/vada.jpg";
-import idliImage from "@/assets/idli.jpg";
+import pongalImage from "@/assets/dish-pongal.jpg";
+import vadaImage from "@/assets/dish-vada.jpg";
+import idliImage from "@/assets/dish-idli.jpg";
 import dosaImage from "@/assets/dosa.jpg";
-import heroImage from "@/assets/hero-bg.jpg";
 
 const Gallery = () => {
   const [visibleItems, setVisibleItems] = useState<number[]>([]);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const images = [
-    { src: heroImage, alt: "Restaurant interior", span: "md:col-span-2 md:row-span-2" },
+    { src: dosaImage, alt: "Restaurant interior", span: "md:col-span-2 md:row-span-2" },
     { src: dosaImage, alt: "Masala Dosa", span: "md:col-span-1 md:row-span-1" },
     { src: idliImage, alt: "Soft Idli", span: "md:col-span-1 md:row-span-1" },
     { src: vadaImage, alt: "Crispy Vada", span: "md:col-span-1 md:row-span-2" },

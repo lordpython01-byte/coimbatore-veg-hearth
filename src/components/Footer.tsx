@@ -1,5 +1,4 @@
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
-import logo from "@/assets/logo.png";
 
 const Footer = () => {
   return (
@@ -7,11 +6,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
-            <img 
-              src={logo} 
-              alt="Annamaye Eatery" 
-              className="h-12 w-auto object-contain mb-4 filter brightness-0 invert"
-            />
+            <h3 className="text-2xl font-bold mb-4">Annamaye Eatery</h3>
             <p className="text-primary-foreground/80">
               Authentic Tamil Nadu vegetarian cuisine in the heart of Coimbatore.
             </p>

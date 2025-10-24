@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroVideo from "@/assets/hero-video.mp4";
+import dosaImage from "@/assets/dosa.jpg";
 
 const Hero = () => {
   const scrollToSection = (id: string) => {
@@ -14,17 +14,12 @@ const Hero = () => {
       id="hero"
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* Video Background */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      >
-        <source src={heroVideo} type="video/mp4" />
-      </video>
-      
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 w-full h-full bg-cover bg-center"
+        style={{ backgroundImage: `url(${dosaImage})` }}
+      />
+
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/60 z-10" />
       <div className="container mx-auto px-4 text-center text-white z-10">
