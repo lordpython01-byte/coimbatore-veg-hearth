@@ -1,51 +1,29 @@
 import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+
+interface Review {
+  id: string;
+  customer_name: string;
+  rating: number;
+  review_text: string;
+  created_at: string;
+}
 
 const Testimonials = () => {
-  const reviews = [
-    {
-      name: "Rajesh Kumar",
-      rating: 5,
-      review:
-        "The most authentic Tamil Nadu cuisine I've tasted outside my grandmother's kitchen. The pongal is absolutely divine!",
-      location: "Coimbatore",
+  const { data: reviews = [], isLoading } = useQuery({
+    queryKey: ['approved-reviews'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customer_reviews')
+        .select('*')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Review[];
     },
-    {
-      name: "Priya Shankar",
-      rating: 5,
-      review:
-        "We hosted our daughter's wedding reception here. The food, service, and ambiance were all exceptional. Highly recommended!",
-      location: "Chennai",
-    },
-    {
-      name: "Venkatesh Iyer",
-      rating: 5,
-      review:
-        "Pure vegetarian paradise indeed! Every dish is prepared with love and tradition. The filter coffee is a must-try.",
-      location: "Coimbatore",
-    },
-    {
-      name: "Lakshmi Ramachandran",
-      rating: 5,
-      review:
-        "The party hall is beautifully decorated and spacious. Our corporate event was a huge success thanks to their impeccable catering.",
-      location: "Bangalore",
-    },
-    {
-      name: "Arun Krishnan",
-      rating: 5,
-      review:
-        "Best idli and dosa in Coimbatore! The chutneys are freshly made and the sambar is perfectly spiced. A true gem.",
-      location: "Coimbatore",
-    },
-    {
-      name: "Meena Sundaram",
-      rating: 5,
-      review:
-        "Family-friendly atmosphere with authentic taste. The staff is courteous and the food quality is consistently excellent.",
-      location: "Madurai",
-    },
-  ];
+  });
 
   return (
     <section id="testimonials" className="py-20 bg-background">
@@ -64,22 +42,37 @@ const Testimonials = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {reviews.map((review, index) => (
-            <Card key={index} className="p-6 border-2 border-border hover:border-accent hover:shadow-2xl transition-all duration-300 bg-card">
-              <div className="flex mb-3">
-                {[...Array(review.rating)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-gold text-gold" />
-                ))}
-              </div>
-              <p className="text-muted-foreground mb-4 italic">"{review.review}"</p>
-              <div className="border-t pt-4">
-                <p className="font-semibold text-foreground">{review.name}</p>
-                <p className="text-sm text-muted-foreground">{review.location}</p>
-              </div>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center">
+            <p className="text-muted-foreground">Loading reviews...</p>
+          </div>
+        ) : reviews.length === 0 ? (
+          <div className="text-center">
+            <p className="text-muted-foreground">No reviews yet. Be the first to leave a review!</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {reviews.map((review) => (
+              <Card key={review.id} className="p-6 border-2 border-border hover:border-accent hover:shadow-2xl transition-all duration-300 bg-card">
+                <div className="flex mb-3">
+                  {[...Array(review.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-gold text-gold" />
+                  ))}
+                </div>
+                <p className="text-muted-foreground mb-4 italic">"{review.review_text}"</p>
+                <div className="border-t pt-4">
+                  <p className="font-semibold text-foreground">{review.customer_name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(review.created_at).toLocaleDateString('en-US', {
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
