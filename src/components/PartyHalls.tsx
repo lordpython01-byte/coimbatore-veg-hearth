@@ -23,7 +23,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const PartyHalls = () => {
-  const partyHallImageUrl = "https://images.unsplash.com/photo-1519167758481-83f29da8c389?w=800&q=80";
+  const partyHallImageUrl = "https://images.pexels.com/photos/7856735/pexels-photo-7856735.jpeg";
   const [open, setOpen] = useState(false);
   const [selectedHall, setSelectedHall] = useState<string>("");
   const [date, setDate] = useState<Date>();
