@@ -60,7 +60,7 @@ const VideoManagement = () => {
               Add Video
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingItem ? 'Edit' : 'Add'} Video Review</DialogTitle>
             </DialogHeader>
@@ -151,42 +151,21 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(formData); }} className="space-y-4">
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div>
-            <Label>Reviewer Name (Tamil)</Label>
-            <Input value={formData.reviewer_name} onChange={(e) => setFormData({ ...formData, reviewer_name: e.target.value })} required />
-          </div>
-          <div>
-            <Label>Reviewer Role</Label>
-            <Input value={formData.reviewer_role} onChange={(e) => setFormData({ ...formData, reviewer_role: e.target.value })} required />
-          </div>
-          <div>
-            <Label>Video URL</Label>
-            <Input value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} required placeholder="https://youtube.com/shorts/..." />
-            <p className="text-xs text-muted-foreground mt-1">YouTube Shorts URL (e.g., https://youtube.com/shorts/wMXxGAOZkdY) or direct video file URL</p>
-          </div>
-        </div>
-        <div>
-          <Label>Preview</Label>
-          <div className="mt-2 bg-black rounded-lg overflow-hidden" style={{ width: '100%', aspectRatio: '9/16', maxWidth: '300px' }}>
-            {formData.video_url && getYouTubeEmbedUrl(formData.video_url) ? (
-              <iframe
-                src={getYouTubeEmbedUrl(formData.video_url)!}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{ border: 'none' }}
-              />
-            ) : formData.video_url && isVideoFile(formData.video_url) ? (
-              <video src={formData.video_url} className="w-full h-full object-cover" controls />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                Enter a video URL to preview
-              </div>
-            )}
-          </div>
-        </div>
+      <div>
+        <Label>Reviewer Name (Tamil)</Label>
+        <Input value={formData.reviewer_name} onChange={(e) => setFormData({ ...formData, reviewer_name: e.target.value })} required />
+      </div>
+      <div>
+        <Label>Reviewer Role</Label>
+        <Input value={formData.reviewer_role} onChange={(e) => setFormData({ ...formData, reviewer_role: e.target.value })} required />
+      </div>
+      <div>
+        <Label>Video URL</Label>
+        <Input value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} required placeholder="https://youtube.com/shorts/..." />
+        <p className="text-xs text-muted-foreground mt-1">YouTube Shorts URL (e.g., https://youtube.com/shorts/wMXxGAOZkdY) or direct video file URL</p>
+        {formData.video_url && (
+          <p className="text-xs text-blue-600 mt-1">Video will be embedded on the website. Preview not available in admin panel.</p>
+        )}
       </div>
       <div>
         <Label>Thumbnail URL (Optional)</Label>
