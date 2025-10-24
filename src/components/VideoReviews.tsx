@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
-import { Play } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface VideoReview {
   id: string;
@@ -12,6 +13,7 @@ interface VideoReview {
   video_url: string;
   thumbnail_url?: string;
   display_order: number;
+  video_type?: 'local' | 'youtube';
 }
 
 const VideoReviews = () => {
@@ -124,6 +126,10 @@ const VideoCard = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [showYouTubeModal, setShowYouTubeModal] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [showControls, setShowControls] = useState(false);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const getTransform = () => {
     if (position === 0) {
@@ -190,11 +196,51 @@ const VideoCard = ({
 
     if (isCenter) {
       video.play().catch(() => {});
+      setIsPlaying(true);
     } else {
       video.pause();
       video.currentTime = 0;
+      setIsPlaying(false);
     }
   }, [isCenter, review.video_url]);
+
+  const togglePlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      video.play();
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.muted = !video.muted;
+    setIsMuted(video.muted);
+  };
+
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  };
+
+  const handleMouseLeave = () => {
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    setShowControls(false);
+  };
 
   return (
     <div
@@ -207,17 +253,65 @@ const VideoCard = ({
       }}
     >
       <Card className="overflow-hidden border-4 border-background shadow-2xl bg-black relative">
-        <div className="w-[280px] h-[500px] md:w-[320px] md:h-[570px] relative">
+        <div
+          className="w-[280px] h-[500px] md:w-[320px] md:h-[570px] relative"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
           {isVideoFile(review.video_url) ? (
-            <video
-              ref={videoRef as any}
-              src={review.video_url}
-              className="w-full h-full object-cover"
-              loop
-              muted
-              playsInline
-              controls={false}
-            />
+            <>
+              <video
+                ref={videoRef as any}
+                src={review.video_url}
+                className="w-full h-full object-cover"
+                loop
+                muted={isMuted}
+                playsInline
+                controls={false}
+              />
+              {position === 0 && (
+                <div
+                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                    showControls ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{ pointerEvents: showControls ? 'auto' : 'none' }}
+                >
+                  <div className="absolute inset-0 bg-black/20" />
+                  <div className="relative z-10 flex gap-4">
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="rounded-full w-14 h-14 shadow-xl"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePlay();
+                      }}
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-6 h-6" fill="currentColor" />
+                      ) : (
+                        <Play className="w-6 h-6 ml-1" fill="currentColor" />
+                      )}
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="rounded-full w-14 h-14 shadow-xl"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleMute();
+                      }}
+                    >
+                      {isMuted ? (
+                        <VolumeX className="w-6 h-6" />
+                      ) : (
+                        <Volume2 className="w-6 h-6" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : isYouTubeUrl(review.video_url) ? (
             <div className="w-full h-full relative bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center p-8 cursor-pointer" onClick={() => setShowYouTubeModal(true)}>
               <div className="text-center space-y-4">
@@ -263,7 +357,7 @@ const VideoCard = ({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 pointer-events-none">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 pointer-events-none z-20">
             <h3 className="text-white font-bold text-xl mb-1">{review.reviewer_name}</h3>
             <p className="text-white/90 text-sm uppercase tracking-wider">{review.reviewer_role}</p>
           </div>

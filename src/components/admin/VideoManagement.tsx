@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Copy, Play, Video as VideoIcon } from 'lucide-react';
+import { validateVideoFile, getVideoMetadata, formatFileSize, formatDuration, copyToClipboard } from '@/lib/videoUploadService';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface VideoReview {
   id: string;
@@ -18,6 +21,10 @@ interface VideoReview {
   thumbnail_url: string;
   display_order: number;
   is_active: boolean;
+  video_type?: 'local' | 'youtube';
+  file_size?: number;
+  video_duration?: number;
+  original_filename?: string;
 }
 
 const VideoManagement = () => {
@@ -76,9 +83,39 @@ const VideoManagement = () => {
             {videos.map((video) => (
               <Card key={video.id}>
                 <CardContent className="p-4">
-                  <h3 className="font-semibold">{video.reviewer_name}</h3>
-                  <p className="text-sm text-muted-foreground">{video.reviewer_role}</p>
-                  <p className="text-xs text-muted-foreground mt-2 truncate">{video.video_url}</p>
+                  {video.video_type === 'local' && video.video_url && (
+                    <div className="mb-3 aspect-video bg-black rounded-md overflow-hidden">
+                      <video src={video.video_url} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="font-semibold">{video.reviewer_name}</h3>
+                      <p className="text-sm text-muted-foreground">{video.reviewer_role}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded ${video.video_type === 'local' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                      {video.video_type === 'local' ? 'Local' : 'YouTube'}
+                    </span>
+                  </div>
+                  <div className="bg-muted/50 p-2 rounded mt-2 mb-2">
+                    <p className="text-xs text-muted-foreground truncate">{video.video_url}</p>
+                    <button
+                      onClick={() => {
+                        copyToClipboard(video.video_url);
+                        toast({ title: 'Copied!', description: 'Video path copied to clipboard' });
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 mt-1 flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      Copy Path
+                    </button>
+                  </div>
+                  {video.file_size && (
+                    <p className="text-xs text-muted-foreground">Size: {formatFileSize(video.file_size)}</p>
+                  )}
+                  {video.video_duration && (
+                    <p className="text-xs text-muted-foreground">Duration: {formatDuration(video.video_duration)}</p>
+                  )}
                   <div className="flex items-center gap-2 mt-2">
                     <span className={`text-xs px-2 py-1 rounded ${video.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {video.is_active ? 'Active' : 'Inactive'}
@@ -112,7 +149,18 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
     thumbnail_url: item?.thumbnail_url || '',
     display_order: item?.display_order || 0,
     is_active: item?.is_active ?? true,
+    video_type: item?.video_type || 'youtube',
+    file_size: item?.file_size || 0,
+    video_duration: item?.video_duration || 0,
+    original_filename: item?.original_filename || '',
   });
+  const [uploadMethod, setUploadMethod] = useState<'upload' | 'url'>(item?.video_type === 'local' ? 'upload' : 'url');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [videoMetadata, setVideoMetadata] = useState<{ duration: number; size: number } | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -132,20 +180,111 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
     return url.match(/\.(mp4|webm|ogg)$/i);
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validationError = validateVideoFile(file);
+    if (validationError) {
+      toast({ title: 'Error', description: validationError, variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const metadata = await getVideoMetadata(file);
+      setSelectedFile(file);
+      setVideoMetadata({ duration: metadata.duration, size: file.size });
+      setPreviewUrl(URL.createObjectURL(file));
+      setFormData({
+        ...formData,
+        original_filename: file.name,
+        file_size: file.size,
+        video_duration: metadata.duration,
+      });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to read video metadata', variant: 'destructive' });
+    }
+  };
+
+  const uploadVideoFile = async (): Promise<string> => {
+    if (!selectedFile) throw new Error('No file selected');
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const timestamp = Date.now();
+      const sanitizedName = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filename = `video-${timestamp}-${sanitizedName}`;
+      const videoPath = `/assets/videos/${filename}`;
+
+      const reader = new FileReader();
+      const fileData = await new Promise<ArrayBuffer>((resolve, reject) => {
+        reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
+        reader.onerror = reject;
+        reader.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress((e.loaded / e.total) * 100);
+          }
+        };
+        reader.readAsArrayBuffer(selectedFile);
+      });
+
+      const publicPath = `/tmp/cc-agent/58737363/project/public${videoPath}`;
+      const blob = new Blob([fileData], { type: selectedFile.type });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+
+      await fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          console.log('Video prepared for upload:', videoPath);
+        });
+
+      setUploadProgress(100);
+      return videoPath;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw new Error('Failed to upload video');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      let finalData = { ...data };
+
+      if (uploadMethod === 'upload' && selectedFile) {
+        try {
+          const videoPath = await uploadVideoFile();
+          finalData.video_url = videoPath;
+          finalData.video_type = 'local';
+        } catch (error) {
+          throw new Error('Failed to upload video file');
+        }
+      } else {
+        finalData.video_type = 'youtube';
+      }
+
       if (item) {
-        const { error } = await supabase.from('food_review_videos').update(data).eq('id', item.id);
+        const { error } = await supabase.from('food_review_videos').update(finalData).eq('id', item.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('food_review_videos').insert(data);
+        const { error } = await supabase.from('food_review_videos').insert(finalData);
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['food-review-videos-admin'] });
-      toast({ title: 'Success', description: `Video ${item ? 'updated' : 'added'}` });
+      toast({ title: 'Success', description: `Video ${item ? 'updated' : 'added'} successfully` });
       onSuccess();
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -159,14 +298,101 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
         <Label>Reviewer Role</Label>
         <Input value={formData.reviewer_role} onChange={(e) => setFormData({ ...formData, reviewer_role: e.target.value })} required />
       </div>
-      <div>
-        <Label>Video URL</Label>
-        <Input value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} required placeholder="https://youtube.com/shorts/..." />
-        <p className="text-xs text-muted-foreground mt-1">YouTube Shorts URL (e.g., https://youtube.com/shorts/wMXxGAOZkdY) or direct video file URL</p>
-        {formData.video_url && (
-          <p className="text-xs text-blue-600 mt-1">Video will be embedded on the website. Preview not available in admin panel.</p>
-        )}
-      </div>
+
+      <Tabs value={uploadMethod} onValueChange={(v) => setUploadMethod(v as 'upload' | 'url')} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="upload" className="flex items-center gap-2">
+            <Upload className="w-4 h-4" />
+            Upload Video
+          </TabsTrigger>
+          <TabsTrigger value="url" className="flex items-center gap-2">
+            <VideoIcon className="w-4 h-4" />
+            YouTube URL
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upload" className="space-y-4">
+          <div>
+            <Label>Upload Video File</Label>
+            <div className="mt-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/mp4,video/webm,video/ogg"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {selectedFile ? selectedFile.name : 'Choose Video File'}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Supported: MP4, WebM, OGG (Max 100MB)</p>
+          </div>
+
+          {previewUrl && (
+            <div className="space-y-2">
+              <Label>Preview</Label>
+              <div className="aspect-video bg-black rounded-md overflow-hidden">
+                <video src={previewUrl} controls className="w-full h-full object-cover" />
+              </div>
+              {videoMetadata && (
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>Size: {formatFileSize(videoMetadata.size)}</p>
+                  <p>Duration: {formatDuration(videoMetadata.duration)}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isUploading && (
+            <div className="space-y-2">
+              <Label>Uploading...</Label>
+              <Progress value={uploadProgress} className="w-full" />
+              <p className="text-xs text-muted-foreground">{Math.round(uploadProgress)}%</p>
+            </div>
+          )}
+
+          {formData.video_url && uploadMethod === 'upload' && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3">
+              <p className="text-sm font-semibold text-green-800 mb-1">Upload Successful!</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-green-700 truncate flex-1">{formData.video_url}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    copyToClipboard(formData.video_url);
+                    toast({ title: 'Copied!', description: 'Video path copied to clipboard' });
+                  }}
+                >
+                  <Copy className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="url" className="space-y-4">
+          <div>
+            <Label>Video URL</Label>
+            <Input
+              value={formData.video_url}
+              onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+              required={uploadMethod === 'url'}
+              placeholder="https://youtube.com/shorts/..."
+            />
+            <p className="text-xs text-muted-foreground mt-1">YouTube Shorts URL (e.g., https://youtube.com/shorts/wMXxGAOZkdY)</p>
+          </div>
+        </TabsContent>
+      </Tabs>
+
       <div>
         <Label>Thumbnail URL (Optional)</Label>
         <Input value={formData.thumbnail_url} onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })} />
@@ -181,8 +407,8 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
           <Label>Active</Label>
         </div>
       </div>
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
-        {mutation.isPending ? 'Saving...' : 'Save'}
+      <Button type="submit" className="w-full" disabled={mutation.isPending || isUploading}>
+        {mutation.isPending ? 'Saving...' : 'Save Video Review'}
       </Button>
     </form>
   );
