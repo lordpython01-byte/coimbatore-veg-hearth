@@ -168,6 +168,20 @@ const VideoCard = ({
     return url.match(/\.(mp4|webm|ogg)$/i) || !url.includes('youtube') && !url.includes('instagram');
   };
 
+  const getYouTubeEmbedUrl = (url: string) => {
+    const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+    const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+    const youtubeMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+
+    const videoId = shortsMatch?.[1] || watchMatch?.[1] || youtubeMatch?.[1];
+
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=${isCenter ? 1 : 0}&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&playsinline=1`;
+    }
+
+    return null;
+  };
+
   useEffect(() => {
     if (!isVideoFile(review.video_url)) return;
 
@@ -194,17 +208,28 @@ const VideoCard = ({
     >
       <Card className="overflow-hidden border-4 border-background shadow-2xl bg-black relative">
         <div className="w-[280px] h-[500px] md:w-[320px] md:h-[570px] relative">
-          <video
-            ref={videoRef as any}
-            src={review.video_url}
-            className="w-full h-full object-cover"
-            loop
-            muted
-            playsInline
-            controls={false}
-          />
+          {isVideoFile(review.video_url) ? (
+            <video
+              ref={videoRef as any}
+              src={review.video_url}
+              className="w-full h-full object-cover"
+              loop
+              muted
+              playsInline
+              controls={false}
+            />
+          ) : getYouTubeEmbedUrl(review.video_url) ? (
+            <iframe
+              key={`${review.id}-${isCenter}`}
+              src={getYouTubeEmbedUrl(review.video_url)!}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ border: 'none' }}
+            />
+          ) : null}
 
-          <div className="absolute top-4 -left-12 h-full flex items-center">
+          <div className="absolute top-4 -left-12 h-full flex items-center pointer-events-none">
             <div
               className="text-white font-bold text-2xl tracking-widest"
               style={{
@@ -218,7 +243,7 @@ const VideoCard = ({
             </div>
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 pointer-events-none">
             <h3 className="text-white font-bold text-xl mb-1">{review.reviewer_name}</h3>
             <p className="text-white/90 text-sm uppercase tracking-wider">{review.reviewer_role}</p>
           </div>
