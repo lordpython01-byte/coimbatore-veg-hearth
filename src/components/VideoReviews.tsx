@@ -32,16 +32,26 @@ const VideoReviews = () => {
   });
 
   const [centerIndex, setCenterIndex] = useState(0);
+  const [canAutoAdvance, setCanAutoAdvance] = useState(false);
+
+  const handleVideoEnd = () => {
+    setCanAutoAdvance(true);
+  };
+
+  const handleVideoStart = () => {
+    setCanAutoAdvance(false);
+  };
 
   useEffect(() => {
-    if (videoReviews.length === 0) return;
+    if (!canAutoAdvance || videoReviews.length === 0) return;
 
-    const interval = setInterval(() => {
+    const timeout = setTimeout(() => {
       setCenterIndex((prev) => (prev + 1) % videoReviews.length);
-    }, 5000);
+      setCanAutoAdvance(false);
+    }, 500);
 
-    return () => clearInterval(interval);
-  }, [videoReviews.length]);
+    return () => clearTimeout(timeout);
+  }, [canAutoAdvance, videoReviews.length]);
 
   if (isLoading) {
     return (
@@ -87,6 +97,9 @@ const VideoReviews = () => {
                   position={position}
                   totalCards={videoReviews.length}
                   isCenter={position === 0}
+                  onVideoEnd={handleVideoEnd}
+                  onVideoStart={handleVideoStart}
+                  onCardChange={() => setCenterIndex(index)}
                 />
               );
             })}
@@ -116,12 +129,18 @@ const VideoCard = ({
   review,
   position,
   totalCards,
-  isCenter
+  isCenter,
+  onVideoEnd,
+  onVideoStart,
+  onCardChange
 }: {
   review: VideoReview;
   position: number;
   totalCards: number;
   isCenter: boolean;
+  onVideoEnd: () => void;
+  onVideoStart: () => void;
+  onCardChange: () => void;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -130,6 +149,8 @@ const VideoCard = ({
   const [isMuted, setIsMuted] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
   const getTransform = () => {
     if (position === 0) {
@@ -195,14 +216,23 @@ const VideoCard = ({
     if (!video) return;
 
     if (isCenter) {
+      video.currentTime = 0;
       video.play().catch(() => {});
       setIsPlaying(true);
+      onVideoStart();
+
+      setShowControls(true);
+      const timer = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
     } else {
       video.pause();
       video.currentTime = 0;
       setIsPlaying(false);
     }
-  }, [isCenter, review.video_url]);
+  }, [isCenter, review.video_url, onVideoStart]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -242,6 +272,42 @@ const VideoCard = ({
     setShowControls(false);
   };
 
+  const handleVideoEnded = () => {
+    onVideoEnd();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!isCenter) return;
+
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        onCardChange();
+      }
+    }
+  };
+
+  const handleClick = () => {
+    if (!isCenter) return;
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  };
+
   return (
     <div
       className="absolute transition-all duration-700 ease-out"
@@ -257,6 +323,10 @@ const VideoCard = ({
           className="w-[280px] h-[500px] md:w-[320px] md:h-[570px] relative"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={handleClick}
         >
           {isVideoFile(review.video_url) ? (
             <>
@@ -264,51 +334,48 @@ const VideoCard = ({
                 ref={videoRef as any}
                 src={review.video_url}
                 className="w-full h-full object-cover"
-                loop
                 muted={isMuted}
                 playsInline
                 controls={false}
+                onEnded={handleVideoEnded}
               />
               {position === 0 && (
                 <div
-                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                  className={`absolute bottom-24 left-0 right-0 flex justify-center gap-3 transition-opacity duration-300 z-30 ${
                     showControls ? 'opacity-100' : 'opacity-0'
                   }`}
                   style={{ pointerEvents: showControls ? 'auto' : 'none' }}
                 >
-                  <div className="absolute inset-0 bg-black/20" />
-                  <div className="relative z-10 flex gap-4">
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      className="rounded-full w-14 h-14 shadow-xl"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        togglePlay();
-                      }}
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-6 h-6" fill="currentColor" />
-                      ) : (
-                        <Play className="w-6 h-6 ml-1" fill="currentColor" />
-                      )}
-                    </Button>
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      className="rounded-full w-14 h-14 shadow-xl"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleMute();
-                      }}
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-6 h-6" />
-                      ) : (
-                        <Volume2 className="w-6 h-6" />
-                      )}
-                    </Button>
-                  </div>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="rounded-full w-12 h-12 shadow-xl bg-white/90 hover:bg-white backdrop-blur-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePlay();
+                    }}
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-5 h-5" fill="currentColor" />
+                    ) : (
+                      <Play className="w-5 h-5 ml-0.5" fill="currentColor" />
+                    )}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="rounded-full w-12 h-12 shadow-xl bg-white/90 hover:bg-white backdrop-blur-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMute();
+                    }}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5" />
+                    ) : (
+                      <Volume2 className="w-5 h-5" />
+                    )}
+                  </Button>
                 </div>
               )}
             </>
