@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
 import { MapPin, Phone, Navigation, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,98 +15,145 @@ interface Location {
   coordinates: { lat: number; lng: number };
 }
 
+const locations: Location[] = [
+  {
+    id: 1,
+    name: "M/S Annamaye Kitchen (Centralized Kitchen, Thirumurugan Poondi)",
+    type: "Kitchen",
+    phone: ["9159671437", "9342085599", "9566446713"],
+    mapUrl: "https://maps.app.goo.gl/9vAThuJfRgch9ZJVA",
+    coordinates: { lat: 11.1646, lng: 77.3149 }
+  },
+  {
+    id: 2,
+    name: "Annamaye Hall (Poondi)",
+    type: "Party Hall",
+    phone: ["9363009645"],
+    mapUrl: "https://maps.app.goo.gl/NaurS4tSzUu2jHZb6",
+    coordinates: { lat: 11.1683, lng: 77.3128 }
+  },
+  {
+    id: 3,
+    name: "Velan Hall (Poondi)",
+    type: "Party Hall",
+    phone: ["9363009645"],
+    mapUrl: "https://maps.app.goo.gl/UucpoTadP5PJmkrv9",
+    coordinates: { lat: 11.1670, lng: 77.3110 }
+  },
+  {
+    id: 4,
+    name: "Kandavel Mahal (Avinashi)",
+    type: "Party Hall",
+    phone: ["9578789616"],
+    mapUrl: "https://maps.app.goo.gl/HFeuvg7AT2yjQrXr7",
+    coordinates: { lat: 11.1906, lng: 77.2681 }
+  },
+  {
+    id: 5,
+    name: "Restaurant - Mangalam Road (Bypass Branch)",
+    type: "Restaurant",
+    phone: ["9600359616"],
+    mapUrl: "https://maps.app.goo.gl/8wmCE1YmHZqYbJBh9",
+    coordinates: { lat: 11.1053, lng: 77.3444 }
+  },
+  {
+    id: 6,
+    name: "Restaurant - Thirumurugan Poondi (Signal Branch)",
+    type: "Restaurant",
+    phone: ["9566342905"],
+    mapUrl: "https://maps.app.goo.gl/Ed4sLm8gDjjhDuUg8",
+    coordinates: { lat: 11.1639, lng: 77.3145 }
+  },
+  {
+    id: 7,
+    name: "Restaurant - Thirumurugan Poondi (Ring Road Branch)",
+    type: "Restaurant",
+    phone: ["8754307403"],
+    mapUrl: "https://maps.app.goo.gl/wPNXSNEfmo3Afoix6",
+    coordinates: { lat: 11.1603, lng: 77.3208 }
+  }
+];
+
+const createCustomIcon = (color: string) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        position: relative;
+        width: 30px;
+        height: 30px;
+      ">
+        <div style="
+          position: absolute;
+          width: 30px;
+          height: 30px;
+          background-color: ${color};
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 3px solid white;
+          box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        ">
+          <div style="
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+          "></div>
+        </div>
+      </div>
+    `,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  });
+};
+
+const getLocationColor = (type: string) => {
+  switch(type) {
+    case "Kitchen": return "#ff6600";
+    case "Party Hall": return "#3b82f6";
+    case "Restaurant": return "#10b981";
+    default: return "#6b7280";
+  }
+};
+
+const getTypeBadgeVariant = (type: string): "default" | "secondary" | "destructive" | "outline" => {
+  switch(type) {
+    case "Kitchen": return "destructive";
+    case "Party Hall": return "default";
+    case "Restaurant": return "secondary";
+    default: return "outline";
+  }
+};
+
+const MapController = ({ center, zoom }: { center: [number, number]; zoom: number }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+
+  return null;
+};
+
 const Locations = () => {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("All");
-
-  const locations: Location[] = [
-    {
-      id: 1,
-      name: "Annamaye Kitchen (Centralized Kitchen)",
-      type: "Kitchen",
-      phone: ["9159671437", "9342085599", "9566446713"],
-      mapUrl: "https://maps.app.goo.gl/9vAThuJfRgch9ZJVA?g_st=iwb",
-      coordinates: { lat: 11.0168, lng: 76.9558 }
-    },
-    {
-      id: 2,
-      name: "Annamaye Hall",
-      type: "Party Hall",
-      phone: ["9363009645"],
-      mapUrl: "https://maps.app.goo.gl/NaurS4tSzUu2jHZb6?g_st=iwb",
-      coordinates: { lat: 11.0175, lng: 76.9565 }
-    },
-    {
-      id: 3,
-      name: "Velan Hall",
-      type: "Party Hall",
-      phone: ["9363009645"],
-      mapUrl: "https://maps.app.goo.gl/UucpoTadP5PJmkrv9?g_st=iwb",
-      coordinates: { lat: 11.0182, lng: 76.9572 }
-    },
-    {
-      id: 4,
-      name: "Kandavel Mahal",
-      type: "Party Hall",
-      phone: ["9578789616"],
-      mapUrl: "https://maps.app.goo.gl/HFeuvg7AT2yjQrXr7?g_st=iwb",
-      coordinates: { lat: 11.0665, lng: 77.0382 }
-    },
-    {
-      id: 5,
-      name: "Mangalam Road (Bypass Branch)",
-      type: "Restaurant",
-      phone: ["9600359616"],
-      mapUrl: "https://maps.app.goo.gl/8wmCE1YmHZqYbJBh9?g_st=iwb",
-      coordinates: { lat: 11.0271, lng: 76.9939 }
-    },
-    {
-      id: 6,
-      name: "Thirumurugan Poondi (Signal Branch)",
-      type: "Restaurant",
-      phone: ["9566342905"],
-      mapUrl: "https://maps.app.goo.gl/Ed4sLm8gDjjhDuUg8?g_st=iwb",
-      coordinates: { lat: 11.0161, lng: 76.9551 }
-    },
-    {
-      id: 7,
-      name: "Thirumurugan Poondi (Ring Road Branch)",
-      type: "Restaurant",
-      phone: ["8754307403"],
-      mapUrl: "https://maps.app.goo.gl/wPNXSNEfmo3Afoix6?g_st=iwb",
-      coordinates: { lat: 11.0154, lng: 76.9544 }
-    }
-  ];
+  const [mapCenter, setMapCenter] = useState<[number, number]>([11.14, 77.35]);
+  const [mapZoom, setMapZoom] = useState(11);
 
   const filteredLocations = activeFilter === "All"
     ? locations
     : locations.filter(loc => loc.type === activeFilter);
 
-  const getTypeColor = (type: string) => {
-    switch(type) {
-      case "Kitchen": return "bg-orange-500";
-      case "Party Hall": return "bg-blue-500";
-      case "Restaurant": return "bg-green-500";
-      default: return "bg-gray-500";
-    }
-  };
-
-  const getTypeBadgeVariant = (type: string): "default" | "secondary" | "destructive" | "outline" => {
-    switch(type) {
-      case "Kitchen": return "destructive";
-      case "Party Hall": return "default";
-      case "Restaurant": return "secondary";
-      default: return "outline";
-    }
-  };
-
-  const minLat = Math.min(...locations.map(l => l.coordinates.lat));
-  const maxLat = Math.max(...locations.map(l => l.coordinates.lat));
-  const minLng = Math.min(...locations.map(l => l.coordinates.lng));
-  const maxLng = Math.max(...locations.map(l => l.coordinates.lng));
-
-  const normalizeCoordinate = (value: number, min: number, max: number) => {
-    return ((value - min) / (max - min)) * 100;
+  const handleLocationClick = (location: Location) => {
+    setSelectedLocation(location);
+    setMapCenter([location.coordinates.lat, location.coordinates.lng]);
+    setMapZoom(15);
   };
 
   return (
@@ -120,7 +169,7 @@ const Locations = () => {
             Our Locations
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Visit us at any of our convenient locations across Coimbatore
+            Visit us at any of our convenient locations across Tiruppur
           </p>
         </div>
 
@@ -132,6 +181,8 @@ const Locations = () => {
               onClick={() => {
                 setActiveFilter(filter);
                 setSelectedLocation(null);
+                setMapCenter([11.14, 77.35]);
+                setMapZoom(11);
               }}
               className="transition-all"
             >
@@ -142,84 +193,63 @@ const Locations = () => {
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 order-2 lg:order-1">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[500px] md:h-[600px] bg-gradient-to-br from-blue-50 to-green-50 dark:from-slate-800 dark:to-slate-900">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-background/5 to-transparent"></div>
-
-              <div className="absolute inset-0 p-8">
-                <div className="relative w-full h-full">
-                  {filteredLocations.map((location) => {
-                    const x = normalizeCoordinate(location.coordinates.lng, minLng, maxLng);
-                    const y = 100 - normalizeCoordinate(location.coordinates.lat, minLat, maxLat);
-                    const isSelected = selectedLocation?.id === location.id;
-
-                    return (
-                      <div
-                        key={location.id}
-                        className="absolute transform -translate-x-1/2 -translate-y-full cursor-pointer transition-all duration-300 hover:scale-110"
-                        style={{
-                          left: `${x}%`,
-                          top: `${y}%`,
-                          zIndex: isSelected ? 20 : 10
-                        }}
-                        onClick={() => setSelectedLocation(location)}
-                      >
-                        <div className={`relative ${isSelected ? 'animate-bounce' : ''}`}>
-                          <div className={`w-12 h-12 rounded-full ${getTypeColor(location.type)} flex items-center justify-center shadow-lg border-4 border-white dark:border-slate-700 ${isSelected ? 'ring-4 ring-primary ring-offset-2' : ''}`}>
-                            <MapPin className="w-6 h-6 text-white" />
-                          </div>
-
-                          {isSelected && (
-                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-background/95 backdrop-blur-sm rounded-lg shadow-xl p-3 w-64 border-2 border-primary">
-                              <h4 className="font-semibold text-sm mb-2">{location.name}</h4>
-                              <Badge variant={getTypeBadgeVariant(location.type)} className="mb-2 text-xs">
-                                {location.type}
-                              </Badge>
-                              <div className="space-y-1 text-xs">
-                                {location.phone.map((phone, idx) => (
-                                  <div key={idx} className="flex items-center gap-1">
-                                    <Phone className="w-3 h-3" />
-                                    <a href={`tel:${phone}`} className="hover:text-primary">
-                                      {phone}
-                                    </a>
-                                  </div>
-                                ))}
-                              </div>
+            <div className="rounded-2xl overflow-hidden shadow-2xl h-[400px] md:h-[500px] lg:h-[600px]">
+              <MapContainer
+                center={[11.14, 77.35]}
+                zoom={11}
+                style={{ height: '100%', width: '100%' }}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapController center={mapCenter} zoom={mapZoom} />
+                {filteredLocations.map((location) => (
+                  <Marker
+                    key={location.id}
+                    position={[location.coordinates.lat, location.coordinates.lng]}
+                    icon={createCustomIcon(getLocationColor(location.type))}
+                    eventHandlers={{
+                      click: () => handleLocationClick(location)
+                    }}
+                  >
+                    <Popup className="custom-popup">
+                      <div className="p-2 min-w-[200px]">
+                        <h4 className="font-semibold text-sm mb-2">{location.name}</h4>
+                        <Badge variant={getTypeBadgeVariant(location.type)} className="mb-3 text-xs">
+                          {location.type}
+                        </Badge>
+                        <div className="space-y-2 text-xs">
+                          {location.phone.map((phone, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <Phone className="w-3 h-3" />
+                              <a href={`tel:${phone}`} className="hover:text-primary">
+                                {phone}
+                              </a>
                             </div>
-                          )}
+                          ))}
+                          <a
+                            href={location.mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-primary hover:underline font-medium mt-2"
+                          >
+                            <Navigation className="w-3 h-3" />
+                            <span>Open in Google Maps</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="absolute top-4 left-4 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3 z-30">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span className="text-xs sm:text-sm font-medium">Kitchen</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-xs sm:text-sm font-medium">Party Hall</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-xs sm:text-sm font-medium">Restaurant</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center z-30">
-                <p className="text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full">
-                  Click on any pin to view details
-                </p>
-              </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
             </div>
           </div>
 
           <div className="lg:col-span-1 order-1 lg:order-2">
-            <div className="h-[500px] md:h-[600px] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+            <div className="h-[400px] md:h-[500px] lg:h-[600px] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
               {filteredLocations.map((location) => (
                 <Card
                   key={location.id}
@@ -228,17 +258,20 @@ const Locations = () => {
                       ? "ring-2 ring-primary shadow-lg scale-[1.02]"
                       : "hover:scale-[1.01]"
                   }`}
-                  onClick={() => setSelectedLocation(location)}
+                  onClick={() => handleLocationClick(location)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-full ${getTypeColor(location.type)} flex items-center justify-center flex-shrink-0 mt-1`}>
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
+                        style={{ backgroundColor: getLocationColor(location.type) }}
+                      >
                         <MapPin className="w-5 h-5 text-white" />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <h4 className="font-semibold text-foreground leading-tight">
+                          <h4 className="font-semibold text-foreground leading-tight text-sm">
                             {location.name}
                           </h4>
                         </div>
@@ -300,6 +333,17 @@ const Locations = () => {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: hsl(var(--primary) / 0.5);
+        }
+        .custom-marker {
+          background: transparent !important;
+          border: none !important;
+        }
+        .leaflet-popup-content-wrapper {
+          border-radius: 12px;
+          padding: 0;
+        }
+        .leaflet-popup-content {
+          margin: 0;
         }
       `}</style>
     </section>
