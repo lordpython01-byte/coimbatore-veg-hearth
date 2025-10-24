@@ -8,7 +8,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FullMenu from "./pages/FullMenu";
 import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard"; 
+import AdminDashboard from "./pages/AdminDashboard";
+import heroVideo from "@/assets/hero-video.mp4";
 
 const queryClient = new QueryClient();
 
