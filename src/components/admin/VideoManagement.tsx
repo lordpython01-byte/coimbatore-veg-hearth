@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Upload, Copy, Play, Video as VideoIcon } from 'lucide-react';
-import { validateVideoFile, getVideoMetadata, formatFileSize, formatDuration, copyToClipboard } from '@/lib/videoUploadService';
+import { validateVideoFile, getVideoMetadata, formatFileSize, formatDuration, copyToClipboard, uploadVideoToSupabase } from '@/lib/videoUploadService';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -222,42 +222,14 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
     setUploadProgress(0);
 
     try {
-      const timestamp = Date.now();
-      const sanitizedName = selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filename = `video-${timestamp}-${sanitizedName}`;
-      const videoPath = `/assets/videos/${filename}`;
-
-      const reader = new FileReader();
-      const fileData = await new Promise<ArrayBuffer>((resolve, reject) => {
-        reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
-        reader.onerror = reject;
-        reader.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setUploadProgress((e.loaded / e.total) * 100);
-          }
-        };
-        reader.readAsArrayBuffer(selectedFile);
+      const publicUrl = await uploadVideoToSupabase(selectedFile, supabase, (progress) => {
+        setUploadProgress(progress);
       });
 
-      const publicPath = `/tmp/cc-agent/58737363/project/public${videoPath}`;
-      const blob = new Blob([fileData], { type: selectedFile.type });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-
-      await fetch(url)
-        .then(res => res.blob())
-        .then(blob => {
-          console.log('Video prepared for upload:', videoPath);
-        });
-
-      setUploadProgress(100);
-      return videoPath;
+      return publicUrl;
     } catch (error) {
       console.error('Upload error:', error);
-      throw new Error('Failed to upload video');
+      throw error instanceof Error ? error : new Error('Failed to upload video');
     } finally {
       setIsUploading(false);
     }
