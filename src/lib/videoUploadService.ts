@@ -23,21 +23,50 @@ export const getVideoMetadata = (file: File): Promise<VideoMetadata> => {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
     video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Video metadata loading timeout'));
+    }, 10000);
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      if (video.src) {
+        URL.revokeObjectURL(video.src);
+      }
+      video.removeAttribute('src');
+      video.load();
+    };
 
     video.onloadedmetadata = () => {
-      window.URL.revokeObjectURL(video.src);
+      const duration = video.duration && isFinite(video.duration) ? Math.round(video.duration) : 0;
+      const width = video.videoWidth || 0;
+      const height = video.videoHeight || 0;
+
+      cleanup();
       resolve({
-        duration: Math.round(video.duration),
-        width: video.videoWidth,
-        height: video.videoHeight,
+        duration,
+        width,
+        height,
       });
     };
 
-    video.onerror = () => {
+    video.onerror = (e) => {
+      cleanup();
+      console.error('Video metadata error:', e);
       reject(new Error('Failed to load video metadata'));
     };
 
-    video.src = URL.createObjectURL(file);
+    try {
+      const blobUrl = URL.createObjectURL(file);
+      video.src = blobUrl;
+      video.load();
+    } catch (error) {
+      cleanup();
+      reject(new Error('Failed to create video URL'));
+    }
   });
 };
 

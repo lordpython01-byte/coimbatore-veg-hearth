@@ -190,19 +190,28 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
       return;
     }
 
+    setSelectedFile(file);
+    const blobUrl = URL.createObjectURL(file);
+    setPreviewUrl(blobUrl);
+
+    setFormData({
+      ...formData,
+      original_filename: file.name,
+      file_size: file.size,
+      video_duration: 0,
+    });
+
+    setVideoMetadata({ duration: 0, size: file.size });
+
     try {
       const metadata = await getVideoMetadata(file);
-      setSelectedFile(file);
       setVideoMetadata({ duration: metadata.duration, size: file.size });
-      setPreviewUrl(URL.createObjectURL(file));
-      setFormData({
-        ...formData,
-        original_filename: file.name,
-        file_size: file.size,
+      setFormData((prev) => ({
+        ...prev,
         video_duration: metadata.duration,
-      });
+      }));
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to read video metadata', variant: 'destructive' });
+      console.warn('Could not extract video metadata, continuing without duration info');
     }
   };
 
