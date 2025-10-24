@@ -241,25 +241,23 @@ const VideoCard = ({
     onTimeUpdate(0);
 
     if (isCenter) {
-      const displayDuration = review.custom_display_duration || review.video_duration || 30;
+      const displayDuration = review.custom_display_duration ?? 30;
       startTimeRef.current = Date.now();
 
-      if (review.custom_display_duration) {
-        durationTimerRef.current = setTimeout(() => {
-          onVideoEnd();
-        }, review.custom_display_duration * 1000);
+      durationTimerRef.current = setTimeout(() => {
+        onVideoEnd();
+      }, displayDuration * 1000);
 
-        countdownIntervalRef.current = setInterval(() => {
-          const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-          const remaining = Math.max(0, displayDuration - elapsed);
-          onTimeUpdate(remaining);
+      countdownIntervalRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        const remaining = Math.max(0, displayDuration - elapsed);
+        onTimeUpdate(remaining);
 
-          if (remaining === 0 && countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-          }
-        }, 1000);
-      }
+        if (remaining === 0 && countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
+      }, 1000);
 
       if (isVideoFile(review.video_url)) {
         const video = videoRef.current as HTMLVideoElement;
@@ -291,7 +289,7 @@ const VideoCard = ({
         }
       }
     }
-  }, [isCenter, review.video_url, review.custom_display_duration, review.video_duration, onVideoStart, onVideoEnd, onTimeUpdate]);
+  }, [isCenter, review.video_url, review.custom_display_duration, onVideoStart, onVideoEnd, onTimeUpdate]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -332,9 +330,6 @@ const VideoCard = ({
   };
 
   const handleVideoEnded = () => {
-    if (!review.custom_display_duration) {
-      onVideoEnd();
-    }
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {

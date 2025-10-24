@@ -494,7 +494,7 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
         )}
         {!usesCustomDuration && (
           <p className="text-xs text-muted-foreground italic">
-            Card will advance when video ends (auto duration)
+            Card will automatically advance after 30 seconds (default)
           </p>
         )}
       </div>
