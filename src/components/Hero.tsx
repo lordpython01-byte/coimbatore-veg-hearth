@@ -20,7 +20,12 @@ const Hero = () => {
         loop
         muted
         playsInline
+        preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
+        onLoadedMetadata={(e) => {
+          const video = e.currentTarget;
+          video.play().catch(err => console.log("Video autoplay failed:", err));
+        }}
       >
         <source src={heroVideo} type="video/mp4" />
       </video>
