@@ -120,7 +120,9 @@ const VideoCard = ({
   isCenter: boolean;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
 
   const getTransform = () => {
     if (position === 0) {
@@ -162,7 +164,10 @@ const VideoCard = ({
 
   useEffect(() => {
     setIsVisible(isCenter);
-  }, [isCenter]);
+    if (isCenter && !isVideoFile(review.video_url)) {
+      setIframeKey(prev => prev + 1);
+    }
+  }, [isCenter, review.video_url]);
 
   const isVideoFile = (url: string) => {
     return url.match(/\.(mp4|webm|ogg)$/i) || !url.includes('youtube') && !url.includes('instagram');
@@ -176,7 +181,7 @@ const VideoCard = ({
     const videoId = shortsMatch?.[1] || watchMatch?.[1] || youtubeMatch?.[1];
 
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?autoplay=${isCenter ? 1 : 0}&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&playsinline=1`;
+      return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=${isCenter ? 1 : 0}&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&playsinline=1&enablejsapi=1`;
     }
 
     return null;
@@ -220,12 +225,14 @@ const VideoCard = ({
             />
           ) : getYouTubeEmbedUrl(review.video_url) ? (
             <iframe
-              key={`${review.id}-${isCenter}`}
+              key={`${review.id}-${iframeKey}`}
+              ref={iframeRef}
               src={getYouTubeEmbedUrl(review.video_url)!}
               className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
               style={{ border: 'none' }}
+              loading="lazy"
             />
           ) : null}
 
