@@ -116,6 +116,22 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const getYouTubeEmbedUrl = (url: string) => {
+    if (!url) return null;
+    const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+    const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+    const youtubeMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+    const videoId = shortsMatch?.[1] || watchMatch?.[1] || youtubeMatch?.[1];
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?mute=1&controls=1`;
+    }
+    return null;
+  };
+
+  const isVideoFile = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg)$/i);
+  };
+
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       if (item) {
@@ -135,18 +151,42 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(formData); }} className="space-y-4">
-      <div>
-        <Label>Reviewer Name (Tamil)</Label>
-        <Input value={formData.reviewer_name} onChange={(e) => setFormData({ ...formData, reviewer_name: e.target.value })} required />
-      </div>
-      <div>
-        <Label>Reviewer Role</Label>
-        <Input value={formData.reviewer_role} onChange={(e) => setFormData({ ...formData, reviewer_role: e.target.value })} required />
-      </div>
-      <div>
-        <Label>Video URL (MP4, WebM, or OGG)</Label>
-        <Input value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} required />
-        <p className="text-xs text-muted-foreground mt-1">Upload video to Supabase Storage or use a direct video URL</p>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <Label>Reviewer Name (Tamil)</Label>
+            <Input value={formData.reviewer_name} onChange={(e) => setFormData({ ...formData, reviewer_name: e.target.value })} required />
+          </div>
+          <div>
+            <Label>Reviewer Role</Label>
+            <Input value={formData.reviewer_role} onChange={(e) => setFormData({ ...formData, reviewer_role: e.target.value })} required />
+          </div>
+          <div>
+            <Label>Video URL</Label>
+            <Input value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} required placeholder="https://youtube.com/shorts/..." />
+            <p className="text-xs text-muted-foreground mt-1">YouTube Shorts URL (e.g., https://youtube.com/shorts/wMXxGAOZkdY) or direct video file URL</p>
+          </div>
+        </div>
+        <div>
+          <Label>Preview</Label>
+          <div className="mt-2 bg-black rounded-lg overflow-hidden" style={{ width: '100%', aspectRatio: '9/16', maxWidth: '300px' }}>
+            {formData.video_url && getYouTubeEmbedUrl(formData.video_url) ? (
+              <iframe
+                src={getYouTubeEmbedUrl(formData.video_url)!}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ border: 'none' }}
+              />
+            ) : formData.video_url && isVideoFile(formData.video_url) ? (
+              <video src={formData.video_url} className="w-full h-full object-cover" controls />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                Enter a video URL to preview
+              </div>
+            )}
+          </div>
+        </div>
       </div>
       <div>
         <Label>Thumbnail URL (Optional)</Label>
