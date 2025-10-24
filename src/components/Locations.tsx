@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Phone, Navigation } from "lucide-react";
+import { MapPin, Phone, Navigation, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,6 @@ interface Location {
   type: "Kitchen" | "Party Hall" | "Restaurant";
   phone: string[];
   mapUrl: string;
-  embedUrl: string;
   coordinates: { lat: number; lng: number };
 }
 
@@ -25,7 +24,6 @@ const Locations = () => {
       type: "Kitchen",
       phone: ["9159671437", "9342085599", "9566446713"],
       mapUrl: "https://maps.app.goo.gl/9vAThuJfRgch9ZJVA?g_st=iwb",
-      embedUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=M/S+ANNAMAYE+KITCHEN+Thirumurugan+Poondi+Coimbatore",
       coordinates: { lat: 11.0168, lng: 76.9558 }
     },
     {
@@ -34,7 +32,6 @@ const Locations = () => {
       type: "Party Hall",
       phone: ["9363009645"],
       mapUrl: "https://maps.app.goo.gl/NaurS4tSzUu2jHZb6?g_st=iwb",
-      embedUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Annamaye+Hall+Poondi+Coimbatore",
       coordinates: { lat: 11.0175, lng: 76.9565 }
     },
     {
@@ -43,7 +40,6 @@ const Locations = () => {
       type: "Party Hall",
       phone: ["9363009645"],
       mapUrl: "https://maps.app.goo.gl/UucpoTadP5PJmkrv9?g_st=iwb",
-      embedUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Velan+Hall+Poondi+Coimbatore",
       coordinates: { lat: 11.0182, lng: 76.9572 }
     },
     {
@@ -52,7 +48,6 @@ const Locations = () => {
       type: "Party Hall",
       phone: ["9578789616"],
       mapUrl: "https://maps.app.goo.gl/HFeuvg7AT2yjQrXr7?g_st=iwb",
-      embedUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Kandavel+Mahal+Avinashi+Coimbatore",
       coordinates: { lat: 11.0665, lng: 77.0382 }
     },
     {
@@ -61,7 +56,6 @@ const Locations = () => {
       type: "Restaurant",
       phone: ["9600359616"],
       mapUrl: "https://maps.app.goo.gl/8wmCE1YmHZqYbJBh9?g_st=iwb",
-      embedUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Annamaye+Mangalam+Road+Bypass+Coimbatore",
       coordinates: { lat: 11.0271, lng: 76.9939 }
     },
     {
@@ -70,7 +64,6 @@ const Locations = () => {
       type: "Restaurant",
       phone: ["9566342905"],
       mapUrl: "https://maps.app.goo.gl/Ed4sLm8gDjjhDuUg8?g_st=iwb",
-      embedUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Annamaye+Thirumurugan+Poondi+Signal+Coimbatore",
       coordinates: { lat: 11.0161, lng: 76.9551 }
     },
     {
@@ -79,7 +72,6 @@ const Locations = () => {
       type: "Restaurant",
       phone: ["8754307403"],
       mapUrl: "https://maps.app.goo.gl/wPNXSNEfmo3Afoix6?g_st=iwb",
-      embedUrl: "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Annamaye+Thirumurugan+Poondi+Ring+Road+Coimbatore",
       coordinates: { lat: 11.0154, lng: 76.9544 }
     }
   ];
@@ -106,8 +98,14 @@ const Locations = () => {
     }
   };
 
-  const mapCenter = "11.0168,76.9558";
-  const mapEmbedUrl = `https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&center=${mapCenter}&zoom=12`;
+  const minLat = Math.min(...locations.map(l => l.coordinates.lat));
+  const maxLat = Math.max(...locations.map(l => l.coordinates.lat));
+  const minLng = Math.min(...locations.map(l => l.coordinates.lng));
+  const maxLng = Math.max(...locations.map(l => l.coordinates.lng));
+
+  const normalizeCoordinate = (value: number, min: number, max: number) => {
+    return ((value - min) / (max - min)) * 100;
+  };
 
   return (
     <section id="locations" className="py-20 bg-gradient-to-b from-background to-muted/30">
@@ -144,33 +142,78 @@ const Locations = () => {
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 order-2 lg:order-1">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[500px] md:h-[600px] bg-muted">
-              <iframe
-                src={selectedLocation ? selectedLocation.embedUrl : mapEmbedUrl}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="absolute inset-0"
-              />
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[500px] md:h-[600px] bg-gradient-to-br from-blue-50 to-green-50 dark:from-slate-800 dark:to-slate-900">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-background/5 to-transparent"></div>
 
-              <div className="absolute top-4 left-4 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3 z-10">
-                <div className="flex items-center gap-3">
+              <div className="absolute inset-0 p-8">
+                <div className="relative w-full h-full">
+                  {filteredLocations.map((location) => {
+                    const x = normalizeCoordinate(location.coordinates.lng, minLng, maxLng);
+                    const y = 100 - normalizeCoordinate(location.coordinates.lat, minLat, maxLat);
+                    const isSelected = selectedLocation?.id === location.id;
+
+                    return (
+                      <div
+                        key={location.id}
+                        className="absolute transform -translate-x-1/2 -translate-y-full cursor-pointer transition-all duration-300 hover:scale-110"
+                        style={{
+                          left: `${x}%`,
+                          top: `${y}%`,
+                          zIndex: isSelected ? 20 : 10
+                        }}
+                        onClick={() => setSelectedLocation(location)}
+                      >
+                        <div className={`relative ${isSelected ? 'animate-bounce' : ''}`}>
+                          <div className={`w-12 h-12 rounded-full ${getTypeColor(location.type)} flex items-center justify-center shadow-lg border-4 border-white dark:border-slate-700 ${isSelected ? 'ring-4 ring-primary ring-offset-2' : ''}`}>
+                            <MapPin className="w-6 h-6 text-white" />
+                          </div>
+
+                          {isSelected && (
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-background/95 backdrop-blur-sm rounded-lg shadow-xl p-3 w-64 border-2 border-primary">
+                              <h4 className="font-semibold text-sm mb-2">{location.name}</h4>
+                              <Badge variant={getTypeBadgeVariant(location.type)} className="mb-2 text-xs">
+                                {location.type}
+                              </Badge>
+                              <div className="space-y-1 text-xs">
+                                {location.phone.map((phone, idx) => (
+                                  <div key={idx} className="flex items-center gap-1">
+                                    <Phone className="w-3 h-3" />
+                                    <a href={`tel:${phone}`} className="hover:text-primary">
+                                      {phone}
+                                    </a>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="absolute top-4 left-4 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-3 z-30">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span className="text-sm font-medium">Kitchen</span>
+                    <span className="text-xs sm:text-sm font-medium">Kitchen</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-sm font-medium">Party Hall</span>
+                    <span className="text-xs sm:text-sm font-medium">Party Hall</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-sm font-medium">Restaurant</span>
+                    <span className="text-xs sm:text-sm font-medium">Restaurant</span>
                   </div>
                 </div>
+              </div>
+
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center z-30">
+                <p className="text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full">
+                  Click on any pin to view details
+                </p>
               </div>
             </div>
           </div>
@@ -225,11 +268,12 @@ const Locations = () => {
                             href={location.mapUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-primary hover:underline"
+                            className="flex items-center gap-2 text-sm text-primary hover:underline font-medium"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Navigation className="w-4 h-4" />
                             <span>Get Directions</span>
+                            <ExternalLink className="w-3 h-3" />
                           </a>
                         </div>
                       </div>
