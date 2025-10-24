@@ -345,6 +345,15 @@ const Locations = () => {
         .leaflet-popup-content {
           margin: 0;
         }
+        .leaflet-container {
+          z-index: 1 !important;
+        }
+        .leaflet-pane {
+          z-index: auto !important;
+        }
+        .leaflet-control-container {
+          z-index: 10 !important;
+        }
       `}</style>
     </section>
   );
