@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import logo from "@/assets/logo.png";
 
-const Header = () => {
+interface HeaderProps {
+  variant?: "transparent" | "solid";
+}
+
+const Header = ({ variant = "transparent" }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -23,13 +27,18 @@ const Header = () => {
     }
   };
 
+  const isSolid = variant === "solid";
+  const shouldUseDarkStyle = isSolid || isScrolled;
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
+    <header className={`fixed top-0 left-0 right-0 z-50 ${isSolid ? "px-4" : "px-4 pt-4"}`}>
       <nav
-        className={`container mx-auto px-6 py-4 flex items-center justify-between rounded-2xl transition-all duration-300 ${
-          isScrolled
-            ? "bg-background/95 backdrop-blur-xl shadow-2xl border-2 border-border"
-            : "bg-background/10 backdrop-blur-md border-2 border-white/10"
+        className={`container mx-auto px-6 py-4 flex items-center justify-between transition-all duration-300 ${
+          isSolid
+            ? "bg-background shadow-md border-b border-border"
+            : isScrolled
+            ? "bg-background/95 backdrop-blur-xl shadow-2xl border-2 border-border rounded-2xl"
+            : "bg-background/10 backdrop-blur-md border-2 border-white/10 rounded-2xl"
         }`}
       >
         <div className="flex items-center">
@@ -37,7 +46,7 @@ const Header = () => {
             src={logo}
             alt="Annamaye Eatery"
             className={`h-12 md:h-14 w-auto object-contain transition-all duration-300 ${
-              isScrolled ? "" : "brightness-0 invert"
+              shouldUseDarkStyle ? "" : "brightness-0 invert"
             }`}
           />
         </div>
@@ -46,37 +55,37 @@ const Header = () => {
         <div className="hidden md:flex items-center gap-6">
           <button
             onClick={() => scrollToSection("hero")}
-            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
+            className={`transition-colors ${shouldUseDarkStyle ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Home
           </button>
           <button
             onClick={() => scrollToSection("catering")}
-            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
+            className={`transition-colors ${shouldUseDarkStyle ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Restaurant & Catering
           </button>
           <button
             onClick={() => scrollToSection("party-halls")}
-            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
+            className={`transition-colors ${shouldUseDarkStyle ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Party Halls
           </button>
           <button
             onClick={() => scrollToSection("menu")}
-            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
+            className={`transition-colors ${shouldUseDarkStyle ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Menu
           </button>
           <button
             onClick={() => scrollToSection("gallery")}
-            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
+            className={`transition-colors ${shouldUseDarkStyle ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Gallery
           </button>
           <button
             onClick={() => scrollToSection("testimonials")}
-            className={`transition-colors ${isScrolled ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
+            className={`transition-colors ${shouldUseDarkStyle ? "text-foreground hover:text-primary" : "text-white hover:text-accent"}`}
           >
             Reviews
           </button>
@@ -87,7 +96,7 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className={`md:hidden ${isScrolled ? "text-foreground" : "text-white"}`}
+          className={`md:hidden ${shouldUseDarkStyle ? "text-foreground" : "text-white"}`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
