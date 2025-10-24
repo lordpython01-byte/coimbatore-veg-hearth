@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -36,6 +36,9 @@ const VideoReviews = () => {
   const [centerIndex, setCenterIndex] = useState(0);
   const [canAutoAdvance, setCanAutoAdvance] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
   const handleVideoEnd = () => {
     setCanAutoAdvance(true);
@@ -43,6 +46,38 @@ const VideoReviews = () => {
 
   const handleVideoStart = () => {
     setCanAutoAdvance(false);
+  };
+
+  const goToNext = () => {
+    setCenterIndex((prev) => (prev + 1) % videoReviews.length);
+  };
+
+  const goToPrevious = () => {
+    setCenterIndex((prev) => (prev - 1 + videoReviews.length) % videoReviews.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        goToNext();
+      } else {
+        goToPrevious();
+      }
+    }
+
+    touchStartX.current = 0;
+    touchEndX.current = 0;
   };
 
   useEffect(() => {
@@ -90,7 +125,13 @@ const VideoReviews = () => {
           </p>
         </div>
 
-        <div className="relative flex items-center justify-center min-h-[600px] isolate">
+        <div
+          ref={containerRef}
+          className="relative flex items-center justify-center min-h-[600px] isolate"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="absolute inset-0 flex items-center justify-center z-0">
             {videoReviews.map((review, index) => {
               const position = (index - centerIndex + videoReviews.length) % videoReviews.length;
@@ -109,6 +150,22 @@ const VideoReviews = () => {
               );
             })}
           </div>
+
+          <button
+            onClick={goToPrevious}
+            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-background/80 backdrop-blur-sm hover:bg-background border border-accent/20 rounded-full p-3 shadow-lg transition-all hover:scale-110"
+            aria-label="Previous video"
+          >
+            <ChevronLeft className="w-6 h-6 text-accent" />
+          </button>
+
+          <button
+            onClick={goToNext}
+            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-background/80 backdrop-blur-sm hover:bg-background border border-accent/20 rounded-full p-3 shadow-lg transition-all hover:scale-110"
+            aria-label="Next video"
+          >
+            <ChevronRight className="w-6 h-6 text-accent" />
+          </button>
         </div>
 
         {timeRemaining > 0 && (
@@ -169,8 +226,6 @@ const VideoCard = ({
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
-  const touchStartX = useRef<number>(0);
-  const touchEndX = useRef<number>(0);
 
   const getTransform = () => {
     if (position === 0) {
@@ -332,27 +387,6 @@ const VideoCard = ({
   const handleVideoEnded = () => {
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = () => {
-    if (!isCenter) return;
-
-    const swipeDistance = touchStartX.current - touchEndX.current;
-    const minSwipeDistance = 50;
-
-    if (Math.abs(swipeDistance) > minSwipeDistance) {
-      if (swipeDistance > 0) {
-        onCardChange();
-      }
-    }
-  };
-
   const handleClick = () => {
     if (!isCenter) return;
     setShowControls(true);
@@ -379,9 +413,6 @@ const VideoCard = ({
           className="w-[280px] h-[500px] md:w-[320px] md:h-[570px] relative"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
           onClick={handleClick}
         >
           {isVideoFile(review.video_url) ? (
