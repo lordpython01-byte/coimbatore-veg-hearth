@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import heroVideo from "@/assets/hero-video.mp4";
 
 const Hero = () => {
+  const heroVideoUrl = "https://cdn.pixabay.com/video/2022/06/13/120245-721547967_large.mp4";
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -22,7 +23,7 @@ const Hero = () => {
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
       >
-        <source src={heroVideo} type="video/mp4" />
+        <source src={heroVideoUrl} type="video/mp4" />
       </video>
 
       {/* Dark overlay */}

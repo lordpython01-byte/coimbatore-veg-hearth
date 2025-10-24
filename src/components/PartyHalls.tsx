@@ -21,9 +21,9 @@ import { toast } from "@/hooks/use-toast";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import partyHallImage from "@/assets/dosa.jpg";
 
 const PartyHalls = () => {
+  const partyHallImageUrl = "https://images.unsplash.com/photo-1519167758481-83f29da8c389?w=800&q=80";
   const [open, setOpen] = useState(false);
   const [selectedHall, setSelectedHall] = useState<string>("");
   const [date, setDate] = useState<Date>();
@@ -87,7 +87,7 @@ const PartyHalls = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <img
-              src={partyHallImage}
+              src={partyHallImageUrl}
               alt="Elegant party hall"
               className="rounded-lg shadow-2xl w-full h-auto"
             />

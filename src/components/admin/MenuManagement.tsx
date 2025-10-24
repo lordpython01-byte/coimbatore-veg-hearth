@@ -375,7 +375,8 @@ const MenuItemForm = ({ item, onSuccess }: { item: MenuItem | null; onSuccess: (
       </div>
       <div>
         <Label htmlFor="image_url">Image URL</Label>
-        <Input id="image_url" placeholder="/assets/dish-name.jpg" value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} required />
+        <Input id="image_url" placeholder="https://example.com/image.jpg" value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} required />
+        <p className="text-xs text-muted-foreground mt-1">Enter a full web URL (e.g., from Unsplash, Pexels, or your CDN)</p>
       </div>
       <div className="flex items-center space-x-2">
         <Switch id="is_available" checked={formData.is_available} onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })} />

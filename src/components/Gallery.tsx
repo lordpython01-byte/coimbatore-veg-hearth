@@ -1,21 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import coffeeImage from "@/assets/coffee.jpg";
-import pongalImage from "@/assets/dish-pongal.jpg";
-import vadaImage from "@/assets/dish-vada.jpg";
-import idliImage from "@/assets/dish-idli.jpg";
-import dosaImage from "@/assets/dosa.jpg";
 
 const Gallery = () => {
   const [visibleItems, setVisibleItems] = useState<number[]>([]);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const images = [
-    { src: dosaImage, alt: "Restaurant interior", span: "md:col-span-2 md:row-span-2" },
-    { src: dosaImage, alt: "Masala Dosa", span: "md:col-span-1 md:row-span-1" },
-    { src: idliImage, alt: "Soft Idli", span: "md:col-span-1 md:row-span-1" },
-    { src: vadaImage, alt: "Crispy Vada", span: "md:col-span-1 md:row-span-2" },
-    { src: pongalImage, alt: "Ven Pongal", span: "md:col-span-1 md:row-span-1" },
-    { src: coffeeImage, alt: "Filter Coffee", span: "md:col-span-1 md:row-span-1" },
+    { src: "https://images.unsplash.com/photo-1630383249896-424e482df921?w=800&q=80", alt: "Restaurant interior", span: "md:col-span-2 md:row-span-2" },
+    { src: "https://images.unsplash.com/photo-1630383249896-424e482df921?w=500&q=80", alt: "Masala Dosa", span: "md:col-span-1 md:row-span-1" },
+    { src: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500&q=80", alt: "Soft Idli", span: "md:col-span-1 md:row-span-1" },
+    { src: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&q=80", alt: "Crispy Vada", span: "md:col-span-1 md:row-span-2" },
+    { src: "https://images.unsplash.com/photo-1606491956689-2ea866880c84?w=500&q=80", alt: "Ven Pongal", span: "md:col-span-1 md:row-span-1" },
+    { src: "https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?w=500&q=80", alt: "Filter Coffee", span: "md:col-span-1 md:row-span-1" },
   ];
 
   useEffect(() => {

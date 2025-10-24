@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
-import logo from "@/assets/logo.png";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const logoUrl = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&q=80";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,7 +34,7 @@ const Header = () => {
       >
         <div className="flex items-center">
           <img
-            src={logo}
+            src={logoUrl}
             alt="Annamaye Eatery"
             className={`h-12 md:h-14 w-auto object-contain transition-all duration-300 ${
               isScrolled ? "" : "brightness-0 invert"
