@@ -262,20 +262,56 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
       }
 
       if (item) {
-        const { error } = await supabase.from('food_review_videos').update(finalData).eq('id', item.id);
-        if (error) throw error;
+        console.log('Updating video review:', { id: item.id, data: finalData });
+        const { data: updatedData, error } = await supabase
+          .from('food_review_videos')
+          .update(finalData)
+          .eq('id', item.id)
+          .select();
+
+        if (error) {
+          console.error('Update error:', error);
+          throw new Error(`Database error: ${error.message} (Code: ${error.code})`);
+        }
+
+        if (!updatedData || updatedData.length === 0) {
+          throw new Error('Update failed: No rows were updated. Please check permissions.');
+        }
+
+        console.log('Update successful:', updatedData);
       } else {
-        const { error } = await supabase.from('food_review_videos').insert(finalData);
-        if (error) throw error;
+        console.log('Inserting video review:', finalData);
+        const { data: insertedData, error } = await supabase
+          .from('food_review_videos')
+          .insert(finalData)
+          .select();
+
+        if (error) {
+          console.error('Insert error:', error);
+          throw new Error(`Database error: ${error.message} (Code: ${error.code})`);
+        }
+
+        if (!insertedData || insertedData.length === 0) {
+          throw new Error('Insert failed: No rows were inserted. Please check permissions.');
+        }
+
+        console.log('Insert successful:', insertedData);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['food-review-videos-admin'] });
+      queryClient.refetchQueries({ queryKey: ['food-review-videos-admin'] });
       toast({ title: 'Success', description: `Video ${item ? 'updated' : 'added'} successfully` });
       onSuccess();
     },
     onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      console.error('Mutation error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'An unknown error occurred',
+        variant: 'destructive',
+        duration: 5000
+      });
     },
   });
 
