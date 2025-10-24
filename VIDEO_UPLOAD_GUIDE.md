@@ -1,8 +1,8 @@
-# Video Upload System Guide
+# Video Upload System Guide - cPanel Hosting
 
 ## Overview
 
-The video upload system has been updated to use **Supabase Storage** for reliable video file storage and management.
+The video upload system is designed for cPanel hosting with 25GB storage. Videos are stored in the `/public/assets/videos/` folder and referenced by path in the database.
 
 ## How It Works
 
@@ -14,27 +14,44 @@ The video upload system has been updated to use **Supabase Storage** for reliabl
    - **Upload Video**: Upload video files directly (MP4, WebM, OGG)
    - **YouTube URL**: Use YouTube Shorts or regular YouTube links
 
-### Video Upload Process
+### Video Upload Process (For Local Files)
 
-When you upload a video file:
+#### Step 1: Select Video in Admin Panel
 
-1. **File Selection**: Choose a video file from your computer
-   - Maximum file size: 100MB
+1. Click "Upload Video" tab
+2. Click "Choose Video File" button
+3. Select your video file (max 100MB)
    - Supported formats: MP4, WebM, OGG
 
-2. **Preview**: The video preview appears immediately with file size information
+#### Step 2: File Preparation
 
-3. **Metadata Extraction**: The system attempts to extract video duration automatically
-   - This happens in the background
-   - If it fails, the upload continues without duration info
+When you select a file:
+- Preview appears immediately
+- File metadata is extracted (size, duration)
+- **File is automatically downloaded** with a timestamp name
+  - Example: `video-1698765432-my_video.mp4`
 
-4. **Upload to Supabase Storage**:
-   - Click "Save Video Review"
-   - The file is uploaded to Supabase Storage bucket `video-reviews`
-   - Progress bar shows upload status
-   - A public URL is generated and stored in the database
+#### Step 3: Save Entry in Database
 
-5. **Success**: The video is now saved and will appear on the public website
+1. Click "Save Video Review"
+2. A notification appears with the exact filename to upload
+3. The database entry is created with the file path: `/assets/videos/filename.mp4`
+
+#### Step 4: Manual Upload to cPanel
+
+**IMPORTANT**: You must manually upload the video file to your server:
+
+1. **Login to your cPanel**
+2. Go to **File Manager**
+3. Navigate to `/public/assets/videos/`
+4. Click **Upload**
+5. Upload the downloaded video file
+6. **Keep the exact filename** (including timestamp)
+
+#### Step 5: Verify
+
+- Refresh your website
+- The video will now play correctly
 
 ### Video Management
 
@@ -43,85 +60,147 @@ When you upload a video file:
 - **Delete**: Remove the video (also deletes from storage)
 - **Active/Inactive**: Toggle video visibility on the public site
 
-## Storage Information
+### Deleting Videos
 
-### Supabase Storage Bucket
+When you delete a video:
+- Database entry is removed immediately
+- **Manual cleanup needed**: Delete the actual file from `/public/assets/videos/` via cPanel File Manager
 
-- **Bucket Name**: `video-reviews`
-- **Access**: Public read, authenticated write
-- **File Size Limit**: 100MB per file
-- **Allowed Types**: video/mp4, video/webm, video/ogg
+### Active/Inactive Toggle
 
-### Database Fields
+- Active videos appear on the public website
+- Inactive videos are hidden but remain in the database
+- File stays on server regardless of active status
 
-- `video_url`: Full public URL to the video file
-- `video_type`: 'local' for uploaded videos, 'youtube' for YouTube links
-- `file_size`: Size of the video file in bytes
-- `video_duration`: Length of video in seconds
-- `original_filename`: Original name of the uploaded file
+## File Management Best Practices
 
-## Public Video Display
+### cPanel File Organization
 
-### Video Player Controls
+Your video files location:
+```
+public/
+  └── assets/
+      └── videos/
+          ├── video-1698765432-review1.mp4
+          ├── video-1698765789-review2.mp4
+          └── video-1698766123-review3.webm
+```
 
-When users view videos on the public site:
+### Storage Management
 
-- **Hover Controls**: Pause/play and mute/unmute buttons appear on hover
-- **Auto-play**: Center video plays automatically (muted)
-- **Auto-hide**: Controls disappear after 3 seconds of inactivity
+With 25GB cPanel storage:
+- Average video size: 5-10MB
+- Estimated capacity: 2,500-5,000 videos
+- Monitor storage usage in cPanel
 
-### Video Types
+### Cleanup Old Videos
 
-- **Local Videos**: Uploaded files from Supabase Storage
-- **YouTube Videos**: Embedded YouTube Shorts or regular videos
+To free up space:
+1. Mark videos as inactive in admin panel
+2. Verify they're no longer needed
+3. Delete from database in admin panel
+4. Manually delete files from `/public/assets/videos/` in cPanel
+
+## Database Fields
+
+- `video_url`: Path like `/assets/videos/filename.mp4`
+- `video_type`: `'local'` for uploaded files, `'youtube'` for YouTube
+- `file_size`: Size in bytes
+- `video_duration`: Duration in seconds
+- `original_filename`: Original upload name
 
 ## Troubleshooting
 
-### Upload Fails
-
-If video upload fails:
-1. Check file size (must be under 100MB)
-2. Verify file format (MP4, WebM, or OGG)
-3. Ensure stable internet connection
-4. Check Supabase Storage quota
-
-### Metadata Extraction Fails
-
-If "Failed to read video metadata" appears:
-- This is a warning, not an error
-- The upload will still work
-- Duration will be 0 in the database
-- The video will play normally on the website
-
 ### Video Doesn't Play
 
-If uploaded video doesn't play:
-1. Verify the video_url field contains a valid Supabase Storage URL
-2. Check that the video file is accessible (public bucket)
-3. Try re-uploading the video
+**Problem**: Video shows in admin but doesn't play on website
+
+**Solutions**:
+1. Verify the file was uploaded to `/public/assets/videos/`
+2. Check the filename matches exactly (case-sensitive)
+3. Ensure file has correct permissions (644)
+4. Clear browser cache
+
+### File Not Found Error
+
+**Problem**: 404 error when playing video
+
+**Solutions**:
+1. Confirm file exists in `/public/assets/videos/`
+2. Check database path matches: `/assets/videos/filename.mp4`
+3. Verify filename spelling (timestamps must match)
+
+### Upload Fails in Admin Panel
+
+**Problem**: Error when saving video entry
+
+**Solutions**:
+1. Check file size (must be under 100MB)
+2. Verify file format (MP4, WebM, or OGG only)
+3. Try a different browser
+4. Check browser console for specific errors
+
+### Video File Too Large
+
+If your video exceeds 100MB:
+
+1. **Compress the video**:
+   - Use tools like HandBrake, FFmpeg, or online compressors
+   - Reduce resolution (e.g., 1080p to 720p)
+   - Lower bitrate
+
+2. **Use YouTube instead**:
+   - Upload to YouTube as unlisted/public
+   - Use YouTube URL in admin panel
+   - No storage used on your server
 
 ## Technical Details
 
-### Upload Flow
+### File Naming Convention
 
-1. File validated (size, type)
-2. File uploaded to Supabase Storage bucket
-3. Public URL retrieved
-4. Database record created/updated with video metadata
-5. Cache invalidated to show new video
-
-### File Naming
-
-Videos are stored with timestamps to prevent conflicts:
 ```
 video-{timestamp}-{sanitized-filename}.{extension}
 ```
 
-Example: `video-1234567890-my_video.mp4`
+- Timestamp: Unix timestamp in milliseconds
+- Sanitized: Only letters, numbers, dots, dashes, underscores
+- Example: `video-1698765432123-masala_dosa_review.mp4`
 
-## Security
+### Public Video Paths
 
-- Only authenticated admin users can upload videos
-- All videos are publicly accessible once uploaded
-- Row Level Security (RLS) policies protect database operations
-- Storage policies control upload/delete permissions
+Videos are accessed via:
+```
+https://yourdomain.com/assets/videos/video-1698765432-review.mp4
+```
+
+## Quick Reference
+
+### Adding a Local Video
+
+1. Admin Panel → Videos → Add Video
+2. Select file → Gets downloaded automatically
+3. Save entry in admin panel (note the filename)
+4. cPanel → File Manager → `/public/assets/videos/`
+5. Upload the downloaded file with exact filename
+
+### Adding a YouTube Video
+
+1. Admin Panel → Videos → Add Video
+2. Switch to "YouTube URL" tab
+3. Paste URL → Save
+4. Done (no file upload needed)
+
+### Deleting a Video
+
+1. Admin Panel → Videos → Click Delete
+2. cPanel → File Manager → `/public/assets/videos/`
+3. Delete the video file manually
+
+## Support
+
+If you encounter issues:
+1. Check this guide first
+2. Verify file paths and names match exactly
+3. Check cPanel error logs
+4. Clear browser cache
+5. Test in incognito/private mode

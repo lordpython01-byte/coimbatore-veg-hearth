@@ -70,44 +70,31 @@ export const getVideoMetadata = (file: File): Promise<VideoMetadata> => {
   });
 };
 
-export const uploadVideoToSupabase = async (
-  file: File,
-  supabaseClient: any,
-  onProgress?: (progress: number) => void
-): Promise<string> => {
+export const downloadVideoFile = (file: File): string => {
   const timestamp = Date.now();
   const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
   const filename = `video-${timestamp}-${sanitizedName}`;
-  const filePath = `videos/${filename}`;
 
-  try {
-    if (onProgress) onProgress(10);
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 
-    const { data, error } = await supabaseClient.storage
-      .from('video-reviews')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+  return filename;
+};
 
-    if (error) {
-      console.error('Supabase upload error:', error);
-      throw new Error(error.message || 'Failed to upload video');
-    }
+export const getVideoFileName = (file: File): string => {
+  const timestamp = Date.now();
+  const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  return `video-${timestamp}-${sanitizedName}`;
+};
 
-    if (onProgress) onProgress(90);
-
-    const { data: publicUrlData } = supabaseClient.storage
-      .from('video-reviews')
-      .getPublicUrl(filePath);
-
-    if (onProgress) onProgress(100);
-
-    return publicUrlData.publicUrl;
-  } catch (error) {
-    console.error('Upload error:', error);
-    throw error instanceof Error ? error : new Error('Failed to upload video');
-  }
+export const getVideoPath = (filename: string): string => {
+  return `/assets/videos/${filename}`;
 };
 
 export const deleteVideoFile = async (videoPath: string): Promise<void> => {

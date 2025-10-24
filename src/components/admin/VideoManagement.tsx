@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Upload, Copy, Play, Video as VideoIcon } from 'lucide-react';
-import { validateVideoFile, getVideoMetadata, formatFileSize, formatDuration, copyToClipboard, uploadVideoToSupabase } from '@/lib/videoUploadService';
+import { validateVideoFile, getVideoMetadata, formatFileSize, formatDuration, copyToClipboard, downloadVideoFile, getVideoFileName, getVideoPath } from '@/lib/videoUploadService';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -215,21 +215,31 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
     }
   };
 
-  const uploadVideoFile = async (): Promise<string> => {
+  const prepareVideoFile = async (): Promise<string> => {
     if (!selectedFile) throw new Error('No file selected');
 
     setIsUploading(true);
     setUploadProgress(0);
 
     try {
-      const publicUrl = await uploadVideoToSupabase(selectedFile, supabase, (progress) => {
-        setUploadProgress(progress);
+      setUploadProgress(30);
+      const filename = downloadVideoFile(selectedFile);
+
+      setUploadProgress(60);
+      const videoPath = getVideoPath(filename);
+
+      setUploadProgress(100);
+
+      toast({
+        title: 'Manual Upload Required',
+        description: `Please upload "${filename}" to your server's /public/assets/videos/ folder via cPanel File Manager`,
+        duration: 10000,
       });
 
-      return publicUrl;
+      return videoPath;
     } catch (error) {
-      console.error('Upload error:', error);
-      throw error instanceof Error ? error : new Error('Failed to upload video');
+      console.error('Prepare error:', error);
+      throw error instanceof Error ? error : new Error('Failed to prepare video file');
     } finally {
       setIsUploading(false);
     }
@@ -241,11 +251,11 @@ const VideoForm = ({ item, onSuccess }: { item: VideoReview | null; onSuccess: (
 
       if (uploadMethod === 'upload' && selectedFile) {
         try {
-          const videoPath = await uploadVideoFile();
+          const videoPath = await prepareVideoFile();
           finalData.video_url = videoPath;
           finalData.video_type = 'local';
         } catch (error) {
-          throw new Error('Failed to upload video file');
+          throw new Error('Failed to prepare video file');
         }
       } else {
         finalData.video_type = 'youtube';
