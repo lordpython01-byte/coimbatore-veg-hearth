@@ -34,19 +34,14 @@ const VideoReviews = () => {
   });
 
   const [centerIndex, setCenterIndex] = useState(0);
-  const [canAutoAdvance, setCanAutoAdvance] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
-  const handleVideoEnd = () => {
-    setCanAutoAdvance(true);
-  };
-
-  const handleVideoStart = () => {
-    setCanAutoAdvance(false);
-  };
+  // (Previously the child signalled the parent to auto-advance via canAutoAdvance.)
+  // We now rely on a single, predictable timer in this component so every card
+  // advances after a fixed duration (15s) unless changed via DB custom_display_duration.
 
   const goToNext = () => {
     setCenterIndex((prev) => (prev + 1) % videoReviews.length);
@@ -80,17 +75,21 @@ const VideoReviews = () => {
     touchEndX.current = 0;
   };
 
+  // Auto-advance timer: advance to next card after 15s (default) whenever
+  // the centerIndex changes. If the review has a custom_display_duration
+  // that value will be used by the child for countdown display, but the
+  // parent controls the actual advance for predictable behavior.
   useEffect(() => {
-    if (!canAutoAdvance || videoReviews.length === 0) return;
+    if (videoReviews.length === 0) return;
 
-    const timeout = setTimeout(() => {
+    const defaultDuration = 15; // seconds
+    const timer = setTimeout(() => {
       setCenterIndex((prev) => (prev + 1) % videoReviews.length);
-      setCanAutoAdvance(false);
       setTimeRemaining(0);
-    }, 500);
+    }, defaultDuration * 1000);
 
-    return () => clearTimeout(timeout);
-  }, [canAutoAdvance, videoReviews.length]);
+    return () => clearTimeout(timer);
+  }, [centerIndex, videoReviews.length]);
 
   if (isLoading) {
     return (
@@ -142,8 +141,6 @@ const VideoReviews = () => {
                   position={position}
                   totalCards={videoReviews.length}
                   isCenter={position === 0}
-                  onVideoEnd={handleVideoEnd}
-                  onVideoStart={handleVideoStart}
                   onCardChange={() => setCenterIndex(index)}
                   onTimeUpdate={(remaining) => setTimeRemaining(remaining)}
                 />
@@ -202,8 +199,6 @@ const VideoCard = ({
   position,
   totalCards,
   isCenter,
-  onVideoEnd,
-  onVideoStart,
   onCardChange,
   onTimeUpdate
 }: {
@@ -211,8 +206,6 @@ const VideoCard = ({
   position: number;
   totalCards: number;
   isCenter: boolean;
-  onVideoEnd: () => void;
-  onVideoStart: () => void;
   onCardChange: () => void;
   onTimeUpdate: (remaining: number) => void;
 }) => {
@@ -222,6 +215,7 @@ const VideoCard = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [showControls, setShowControls] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -285,6 +279,8 @@ const VideoCard = ({
   };
 
   useEffect(() => {
+    let videoEnded = false;
+    
     if (durationTimerRef.current) {
       clearTimeout(durationTimerRef.current);
       durationTimerRef.current = null;
@@ -296,25 +292,35 @@ const VideoCard = ({
     onTimeUpdate(0);
 
     if (isCenter) {
-      const displayDuration = review.custom_display_duration ?? 30;
+      // Use 15s default per card unless overridden by DB value
+      const displayDuration = review.custom_display_duration ?? 15;
       startTimeRef.current = Date.now();
 
       if (isVideoFile(review.video_url)) {
         const video = videoRef.current as HTMLVideoElement;
         if (video) {
-          video.loop = false;
           video.currentTime = 0;
-          video.play().catch(() => {});
-          setIsPlaying(true);
+          
+          // Set up video event listeners
+          const onVideoEnd = () => {
+            videoEnded = true;
+            setIsPlaying(false);
+          };
+          
+          video.addEventListener('ended', onVideoEnd);
+          
+          if (isLoaded) {
+            video.play().catch(() => {});
+            setIsPlaying(true);
+          }
+
+          return () => {
+            video.removeEventListener('ended', onVideoEnd);
+          };
         }
       }
 
-      onVideoStart();
-
-      durationTimerRef.current = setTimeout(() => {
-        onVideoEnd();
-      }, displayDuration * 1000);
-
+      // Start countdown display (parent controls actual advance)
       countdownIntervalRef.current = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
         const remaining = Math.max(0, displayDuration - elapsed);
@@ -352,7 +358,7 @@ const VideoCard = ({
         }
       }
     }
-  }, [isCenter, review.id, onVideoStart, onVideoEnd, onTimeUpdate]);
+  }, [isCenter, review.id, onTimeUpdate]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -393,6 +399,26 @@ const VideoCard = ({
   };
 
   const handleVideoEnded = () => {
+    // When video ends naturally, pause it and show play button
+    setIsPlaying(false);
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = 0; // Reset to start
+    }
+  };
+
+  const handleVideoLoaded = () => {
+    setIsLoaded(true);
+    if (isCenter && videoRef.current) {
+      const video = videoRef.current;
+      // Reset any previous state
+      video.currentTime = 0;
+      // Ensure video properties are set correctly
+      video.loop = false;
+      video.preload = "auto";
+      video.play().catch(() => {});
+      setIsPlaying(true);
+    }
   };
 
   const handleClick = () => {
@@ -431,7 +457,13 @@ const VideoCard = ({
                 className="w-full h-full object-cover"
                 muted={isMuted}
                 playsInline
+                preload="auto"
                 loop={false}
+                onLoadedData={handleVideoLoaded}
+                onLoadedMetadata={(e) => {
+                  const video = e.target as HTMLVideoElement;
+                  video.loop = false;
+                }}
                 controls={false}
                 onEnded={handleVideoEnded}
               />
