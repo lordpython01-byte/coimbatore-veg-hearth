@@ -299,6 +299,18 @@ const VideoCard = ({
       const displayDuration = review.custom_display_duration ?? 30;
       startTimeRef.current = Date.now();
 
+      if (isVideoFile(review.video_url)) {
+        const video = videoRef.current as HTMLVideoElement;
+        if (video) {
+          video.loop = false;
+          video.currentTime = 0;
+          video.play().catch(() => {});
+          setIsPlaying(true);
+        }
+      }
+
+      onVideoStart();
+
       durationTimerRef.current = setTimeout(() => {
         onVideoEnd();
       }, displayDuration * 1000);
@@ -314,16 +326,6 @@ const VideoCard = ({
         }
       }, 1000);
 
-      if (isVideoFile(review.video_url)) {
-        const video = videoRef.current as HTMLVideoElement;
-        if (video) {
-          video.currentTime = 0;
-          video.play().catch(() => {});
-          setIsPlaying(true);
-        }
-      }
-
-      onVideoStart();
       setShowControls(true);
       const timer = setTimeout(() => {
         setShowControls(false);
@@ -331,8 +333,14 @@ const VideoCard = ({
 
       return () => {
         clearTimeout(timer);
-        if (durationTimerRef.current) clearTimeout(durationTimerRef.current);
-        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        if (durationTimerRef.current) {
+          clearTimeout(durationTimerRef.current);
+          durationTimerRef.current = null;
+        }
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
+        }
       };
     } else {
       if (isVideoFile(review.video_url)) {
@@ -344,7 +352,7 @@ const VideoCard = ({
         }
       }
     }
-  }, [isCenter, review.video_url, review.custom_display_duration, onVideoStart, onVideoEnd, onTimeUpdate]);
+  }, [isCenter, review.id, onVideoStart, onVideoEnd, onTimeUpdate]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -423,6 +431,7 @@ const VideoCard = ({
                 className="w-full h-full object-cover"
                 muted={isMuted}
                 playsInline
+                loop={false}
                 controls={false}
                 onEnded={handleVideoEnded}
               />
