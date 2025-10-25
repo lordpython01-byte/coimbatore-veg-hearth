@@ -74,7 +74,7 @@ export const AdminVideoManager = () => {
               placeholder="Food Vlogger"
               required
             />
-          </div>
+          </div> 
           <div>
             <Label htmlFor="url">Video URL (YouTube Shorts or Instagram Reels)</Label>
             <Input
