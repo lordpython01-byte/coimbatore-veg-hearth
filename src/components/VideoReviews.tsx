@@ -472,23 +472,13 @@ const VideoCard = ({
                   className={`absolute bottom-24 left-0 right-0 flex justify-center gap-3 transition-opacity duration-300 z-30 ${
                     showControls ? 'opacity-100' : 'opacity-0'
                   }`}
-                  style={{ pointerEvents: 'auto' }}
-                  onClick={(e) => {
-                    // Prevent click from reaching the parent card
-                    e.stopPropagation();
-                  }}
+                  style={{ pointerEvents: showControls ? 'auto' : 'none' }}
                 >
                   <Button
                     size="icon"
                     variant="secondary"
                     className="rounded-full w-12 h-12 shadow-xl bg-white/90 hover:bg-white backdrop-blur-sm"
                     onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      togglePlay();
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
                       e.stopPropagation();
                       togglePlay();
                     }}
@@ -504,12 +494,6 @@ const VideoCard = ({
                     variant="secondary"
                     className="rounded-full w-12 h-12 shadow-xl bg-white/90 hover:bg-white backdrop-blur-sm"
                     onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleMute();
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
                       e.stopPropagation();
                       toggleMute();
                     }}
