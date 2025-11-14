@@ -127,12 +127,12 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
             >
               Party Halls
             </button>
-            <button
+            {/*<button
               onClick={() => scrollToSection("menu")}
               className="text-left text-foreground hover:text-primary transition-colors"
             >
               Menu
-            </button>
+            </button>*/}
             <button
               onClick={() => scrollToSection("gallery")}
               className="text-left text-foreground hover:text-primary transition-colors"
