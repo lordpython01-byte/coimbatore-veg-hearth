@@ -1,78 +1,28 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import L from "leaflet";
-import { MapPin, Phone, Navigation, ExternalLink } from "lucide-react";
+import { MapPin, Phone, Navigation, ExternalLink, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface Location {
-  id: number;
+  id: string;
   name: string;
-  type: "Kitchen" | "Party Hall" | "Restaurant";
-  phone: string[];
-  mapUrl: string;
-  coordinates: { lat: number; lng: number };
+  address: string;
+  city: string;
+  phone: string;
+  email: string;
+  map_url: string;
+  latitude: number | null;
+  longitude: number | null;
+  is_active: boolean;
+  opening_time: string;
+  closing_time: string;
+  display_order: number;
 }
-
-const locations: Location[] = [
-  {
-    id: 1,
-    name: "M/S Annamaye Kitchen (Centralized Kitchen, Thirumurugan Poondi)",
-    type: "Kitchen",
-    phone: ["9159671437", "9342085599", "9566446713"],
-    mapUrl: "https://maps.app.goo.gl/9vAThuJfRgch9ZJVA",
-    coordinates: { lat: 11.1646, lng: 77.3149 }
-  },
-  {
-    id: 2,
-    name: "Annamaye Hall (Poondi)",
-    type: "Party Hall",
-    phone: ["9363009645"],
-    mapUrl: "https://maps.app.goo.gl/NaurS4tSzUu2jHZb6",
-    coordinates: { lat: 11.1683, lng: 77.3128 }
-  },
-  {
-    id: 3,
-    name: "Velan Hall (Poondi)",
-    type: "Party Hall",
-    phone: ["9363009645"],
-    mapUrl: "https://maps.app.goo.gl/UucpoTadP5PJmkrv9",
-    coordinates: { lat: 11.1670, lng: 77.3110 }
-  },
-  {
-    id: 4,
-    name: "Kandavel Mahal (Avinashi)",
-    type: "Party Hall",
-    phone: ["9578789616"],
-    mapUrl: "https://maps.app.goo.gl/HFeuvg7AT2yjQrXr7",
-    coordinates: { lat: 11.1906, lng: 77.2681 }
-  },
-  {
-    id: 5,
-    name: "Restaurant - Mangalam Road (Bypass Branch)",
-    type: "Restaurant",
-    phone: ["9600359616"],
-    mapUrl: "https://maps.app.goo.gl/8wmCE1YmHZqYbJBh9",
-    coordinates: { lat: 11.1053, lng: 77.3444 }
-  },
-  {
-    id: 6,
-    name: "Restaurant - Thirumurugan Poondi (Signal Branch)",
-    type: "Restaurant",
-    phone: ["9566342905"],
-    mapUrl: "https://maps.app.goo.gl/Ed4sLm8gDjjhDuUg8",
-    coordinates: { lat: 11.1639, lng: 77.3145 }
-  },
-  {
-    id: 7,
-    name: "Restaurant - Thirumurugan Poondi (Ring Road Branch)",
-    type: "Restaurant",
-    phone: ["8754307403"],
-    mapUrl: "https://maps.app.goo.gl/wPNXSNEfmo3Afoix6",
-    coordinates: { lat: 11.1603, lng: 77.3208 }
-  }
-];
 
 const createCustomIcon = (color: string) => {
   return L.divIcon({
@@ -112,13 +62,18 @@ const createCustomIcon = (color: string) => {
   });
 };
 
-const getLocationColor = (type: string) => {
-  switch(type) {
-    case "Kitchen": return "#ff6600";
-    case "Party Hall": return "#3b82f6";
-    case "Restaurant": return "#10b981";
-    default: return "#6b7280";
-  }
+const getLocationColor = (name: string) => {
+  if (name.toLowerCase().includes('kitchen')) return "#ff6600";
+  if (name.toLowerCase().includes('hall')) return "#3b82f6";
+  if (name.toLowerCase().includes('restaurant')) return "#10b981";
+  return "#6b7280";
+};
+
+const getLocationType = (name: string) => {
+  if (name.toLowerCase().includes('kitchen')) return "Kitchen";
+  if (name.toLowerCase().includes('hall')) return "Party Hall";
+  if (name.toLowerCase().includes('restaurant')) return "Restaurant";
+  return "Location";
 };
 
 const getTypeBadgeVariant = (type: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -146,15 +101,69 @@ const Locations = () => {
   const [mapCenter, setMapCenter] = useState<[number, number]>([11.14, 77.35]);
   const [mapZoom, setMapZoom] = useState(11);
 
+  const { data: locations = [], isLoading } = useQuery({
+    queryKey: ['public-locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      return data as Location[];
+    },
+  });
+
+  const locationsWithCoordinates = locations.filter(loc => loc.latitude && loc.longitude);
+
   const filteredLocations = activeFilter === "All"
-    ? locations
-    : locations.filter(loc => loc.type === activeFilter);
+    ? locationsWithCoordinates
+    : locationsWithCoordinates.filter(loc => getLocationType(loc.name) === activeFilter);
 
   const handleLocationClick = (location: Location) => {
     setSelectedLocation(location);
-    setMapCenter([location.coordinates.lat, location.coordinates.lng]);
-    setMapZoom(15);
+    if (location.latitude && location.longitude) {
+      setMapCenter([location.latitude, location.longitude]);
+      setMapZoom(15);
+    }
   };
+
+  const phoneNumbers = (phone: string) => {
+    return phone.split(',').map(p => p.trim()).filter(Boolean);
+  };
+
+  useEffect(() => {
+    if (locationsWithCoordinates.length > 0 && !selectedLocation) {
+      const firstLoc = locationsWithCoordinates[0];
+      if (firstLoc.latitude && firstLoc.longitude) {
+        setMapCenter([firstLoc.latitude, firstLoc.longitude]);
+      }
+    }
+  }, [locationsWithCoordinates.length]);
+
+  if (isLoading) {
+    return (
+      <section id="locations" className="py-20 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-muted-foreground">Loading locations...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (locationsWithCoordinates.length === 0) {
+    return (
+      <section id="locations" className="py-20 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-muted-foreground">No locations available at the moment.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="locations" className="py-20 bg-gradient-to-b from-background to-muted/30">
@@ -181,7 +190,12 @@ const Locations = () => {
               onClick={() => {
                 setActiveFilter(filter);
                 setSelectedLocation(null);
-                setMapCenter([11.14, 77.35]);
+                if (locationsWithCoordinates.length > 0) {
+                  const firstLoc = locationsWithCoordinates[0];
+                  if (firstLoc.latitude && firstLoc.longitude) {
+                    setMapCenter([firstLoc.latitude, firstLoc.longitude]);
+                  }
+                }
                 setMapZoom(11);
               }}
               className="transition-all"
@@ -195,8 +209,8 @@ const Locations = () => {
           <div className="lg:col-span-2 order-2 lg:order-1">
             <div className="rounded-2xl overflow-hidden shadow-2xl h-[400px] md:h-[500px] lg:h-[600px]">
               <MapContainer
-                center={[11.14, 77.35]}
-                zoom={11}
+                center={mapCenter}
+                zoom={mapZoom}
                 style={{ height: '100%', width: '100%' }}
                 scrollWheelZoom={true}
               >
@@ -206,43 +220,53 @@ const Locations = () => {
                 />
                 <MapController center={mapCenter} zoom={mapZoom} />
                 {filteredLocations.map((location) => (
-                  <Marker
-                    key={location.id}
-                    position={[location.coordinates.lat, location.coordinates.lng]}
-                    icon={createCustomIcon(getLocationColor(location.type))}
-                    eventHandlers={{
-                      click: () => handleLocationClick(location)
-                    }}
-                  >
-                    <Popup className="custom-popup">
-                      <div className="p-2 min-w-[200px]">
-                        <h4 className="font-semibold text-sm mb-2">{location.name}</h4>
-                        <Badge variant={getTypeBadgeVariant(location.type)} className="mb-3 text-xs">
-                          {location.type}
-                        </Badge>
-                        <div className="space-y-2 text-xs">
-                          {location.phone.map((phone, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <Phone className="w-3 h-3" />
-                              <a href={`tel:${phone}`} className="hover:text-primary">
-                                {phone}
+                  location.latitude && location.longitude && (
+                    <Marker
+                      key={location.id}
+                      position={[location.latitude, location.longitude]}
+                      icon={createCustomIcon(getLocationColor(location.name))}
+                      eventHandlers={{
+                        click: () => handleLocationClick(location)
+                      }}
+                    >
+                      <Popup className="custom-popup">
+                        <div className="p-2 min-w-[200px]">
+                          <h4 className="font-semibold text-sm mb-2">{location.name}</h4>
+                          <Badge variant={getTypeBadgeVariant(getLocationType(location.name))} className="mb-3 text-xs">
+                            {getLocationType(location.name)}
+                          </Badge>
+                          <div className="space-y-2 text-xs">
+                            {phoneNumbers(location.phone).map((phone, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Phone className="w-3 h-3" />
+                                <a href={`tel:${phone}`} className="hover:text-primary">
+                                  {phone}
+                                </a>
+                              </div>
+                            ))}
+                            {location.opening_time && location.closing_time && (
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-3 h-3" />
+                                <span>{location.opening_time} - {location.closing_time}</span>
+                              </div>
+                            )}
+                            {location.map_url && (
+                              <a
+                                href={location.map_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-primary hover:underline font-medium mt-2"
+                              >
+                                <Navigation className="w-3 h-3" />
+                                <span>Open in Google Maps</span>
+                                <ExternalLink className="w-3 h-3" />
                               </a>
-                            </div>
-                          ))}
-                          <a
-                            href={location.mapUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-primary hover:underline font-medium mt-2"
-                          >
-                            <Navigation className="w-3 h-3" />
-                            <span>Open in Google Maps</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </Popup>
-                  </Marker>
+                      </Popup>
+                    </Marker>
+                  )
                 ))}
               </MapContainer>
             </div>
@@ -264,7 +288,7 @@ const Locations = () => {
                     <div className="flex items-start gap-3">
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
-                        style={{ backgroundColor: getLocationColor(location.type) }}
+                        style={{ backgroundColor: getLocationColor(location.name) }}
                       >
                         <MapPin className="w-5 h-5 text-white" />
                       </div>
@@ -276,15 +300,19 @@ const Locations = () => {
                           </h4>
                         </div>
 
-                        <Badge variant={getTypeBadgeVariant(location.type)} className="mb-3">
-                          {location.type}
+                        <Badge variant={getTypeBadgeVariant(getLocationType(location.name))} className="mb-3">
+                          {getLocationType(location.name)}
                         </Badge>
+
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {location.address}, {location.city}
+                        </p>
 
                         <div className="space-y-2">
                           <div className="flex items-start gap-2">
                             <Phone className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                             <div className="flex flex-col gap-1">
-                              {location.phone.map((phone, idx) => (
+                              {phoneNumbers(location.phone).map((phone, idx) => (
                                 <a
                                   key={idx}
                                   href={`tel:${phone}`}
@@ -297,17 +325,26 @@ const Locations = () => {
                             </div>
                           </div>
 
-                          <a
-                            href={location.mapUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm text-primary hover:underline font-medium"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Navigation className="w-4 h-4" />
-                            <span>Get Directions</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                          {location.opening_time && location.closing_time && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="w-4 h-4 flex-shrink-0" />
+                              <span>{location.opening_time} - {location.closing_time}</span>
+                            </div>
+                          )}
+
+                          {location.map_url && (
+                            <a
+                              href={location.map_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-sm text-primary hover:underline font-medium"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Navigation className="w-4 h-4" />
+                              <span>Get Directions</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
