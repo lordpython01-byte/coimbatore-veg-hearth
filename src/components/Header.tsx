@@ -91,7 +91,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
           >
             Reviews
           </button>
-          <Button onClick={() => navigate("/menu")}>
+          <Button onClick={() => scrollToSection("gallery")}>
             View Full Menu
           </Button>
         </div>
