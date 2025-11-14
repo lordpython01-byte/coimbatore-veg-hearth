@@ -145,7 +145,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
             >
               Reviews
             </button>
-            <Button onClick={() => navigate("/menu")}>
+            <Button onClick={() => navigate("/full-menu")}>
               View Full Menu
             </Button>
           </div>
