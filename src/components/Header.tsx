@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
 interface HeaderProps {
@@ -10,6 +11,7 @@ interface HeaderProps {
 const Header = ({ variant = "transparent" }: HeaderProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -89,8 +91,8 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
           >
             Reviews
           </button>
-          <Button onClick={() => scrollToSection("review-form")}>
-            Write a Review
+          <Button onClick={() => navigate("/menu")}>
+            View Full Menu
           </Button>
         </div>
 
@@ -143,8 +145,8 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
             >
               Reviews
             </button>
-            <Button onClick={() => scrollToSection("review-form")}>
-              Write a Review
+            <Button onClick={() => navigate("/menu")}>
+              View Full Menu
             </Button>
           </div>
         </div>
