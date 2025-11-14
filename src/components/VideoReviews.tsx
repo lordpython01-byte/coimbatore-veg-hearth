@@ -19,6 +19,19 @@ interface VideoReview {
 }
 
 const VideoReviews = () => {
+  const { data: sectionSettings } = useQuery({
+    queryKey: ['section-settings-video'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('section_settings')
+        .select('*')
+        .eq('section_name', 'video_reviews')
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: videoReviews = [], isLoading } = useQuery({
     queryKey: ['food-review-videos'],
     queryFn: async () => {
@@ -90,6 +103,10 @@ const VideoReviews = () => {
 
     return () => clearTimeout(timer);
   }, [centerIndex, videoReviews.length]);
+
+  if (sectionSettings && !sectionSettings.is_visible) {
+    return null;
+  }
 
   if (isLoading) {
     return (

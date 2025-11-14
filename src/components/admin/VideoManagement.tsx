@@ -46,6 +46,19 @@ const VideoManagement = () => {
     },
   });
 
+  const { data: sectionSettings } = useQuery({
+    queryKey: ['section-settings-video'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('section_settings')
+        .select('*')
+        .eq('section_name', 'video_reviews')
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('food_review_videos').delete().eq('id', id);
@@ -57,24 +70,55 @@ const VideoManagement = () => {
     },
   });
 
+  const toggleSectionVisibility = useMutation({
+    mutationFn: async (isVisible: boolean) => {
+      const { error } = await supabase
+        .from('section_settings')
+        .update({ is_visible: isVisible, updated_at: new Date().toISOString() })
+        .eq('section_name', 'video_reviews');
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['section-settings-video'] });
+      toast({
+        title: 'Success',
+        description: `Video Reviews section is now ${sectionSettings?.is_visible ? 'hidden' : 'visible'} on user panel`
+      });
+    },
+  });
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Video Reviews</CardTitle>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingItem(null); setIsDialogOpen(true); }}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Video
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingItem ? 'Edit' : 'Add'} Video Review</DialogTitle>
-            </DialogHeader>
-            <VideoForm item={editingItem} onSuccess={() => { setIsDialogOpen(false); setEditingItem(null); }} />
-          </DialogContent>
-        </Dialog>
+      <CardHeader className="space-y-1.5 p-6">
+        <div className="flex flex-row items-center justify-between">
+          <CardTitle>Video Reviews</CardTitle>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="section-toggle" className="text-sm font-normal">
+                {sectionSettings?.is_visible ? 'Visible' : 'Hidden'} on User Panel
+              </Label>
+              <Switch
+                id="section-toggle"
+                checked={sectionSettings?.is_visible ?? true}
+                onCheckedChange={(checked) => toggleSectionVisibility.mutate(checked)}
+              />
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { setEditingItem(null); setIsDialogOpen(true); }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Video
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{editingItem ? 'Edit' : 'Add'} Video Review</DialogTitle>
+                </DialogHeader>
+                <VideoForm item={editingItem} onSuccess={() => { setIsDialogOpen(false); setEditingItem(null); }} />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
