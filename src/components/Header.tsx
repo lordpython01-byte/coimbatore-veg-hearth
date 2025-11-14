@@ -125,7 +125,7 @@ const Header = ({ variant = "transparent" }: HeaderProps) => {
               onClick={() => scrollToSection("party-halls")}
               className="text-left text-foreground hover:text-primary transition-colors"
             >
-              Party Halls
+              Party Halls 
             </button>
             {/*<button
               onClick={() => scrollToSection("menu")}
