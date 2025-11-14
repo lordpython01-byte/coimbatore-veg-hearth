@@ -9,7 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, MapPin, Phone, Mail, Map } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Phone, Mail, Map, Store } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -38,6 +40,7 @@ interface Location {
   opening_time: string;
   closing_time: string;
   display_order: number;
+  type: 'Kitchen' | 'Party Hall' | 'Restaurant';
 }
 
 const LocationManagement = () => {
@@ -123,6 +126,9 @@ const LocationManagement = () => {
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-3">
+                    <Badge variant={location.type === 'Kitchen' ? 'destructive' : location.type === 'Party Hall' ? 'default' : 'secondary'}>
+                      {location.type}
+                    </Badge>
                     <span className={`text-xs px-2 py-1 rounded ${location.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {location.is_active ? 'Active' : 'Inactive'}
                     </span>
@@ -183,6 +189,7 @@ const LocationForm = ({ item, onSuccess }: { item: Location | null; onSuccess: (
     opening_time: item?.opening_time || '09:00',
     closing_time: item?.closing_time || '22:00',
     display_order: item?.display_order || 0,
+    type: item?.type || 'Restaurant' as 'Kitchen' | 'Party Hall' | 'Restaurant',
   });
   const [showMap, setShowMap] = useState(false);
   const [mapPosition, setMapPosition] = useState<[number, number]>([
@@ -222,7 +229,7 @@ const LocationForm = ({ item, onSuccess }: { item: Location | null; onSuccess: (
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(formData); }} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
           <Label>Name</Label>
           <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
@@ -230,6 +237,19 @@ const LocationForm = ({ item, onSuccess }: { item: Location | null; onSuccess: (
         <div>
           <Label>City</Label>
           <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} required />
+        </div>
+        <div>
+          <Label>Type</Label>
+          <Select value={formData.type} onValueChange={(value: 'Kitchen' | 'Party Hall' | 'Restaurant') => setFormData({ ...formData, type: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Kitchen">Kitchen</SelectItem>
+              <SelectItem value="Party Hall">Party Hall</SelectItem>
+              <SelectItem value="Restaurant">Restaurant</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div>

@@ -22,6 +22,7 @@ interface Location {
   opening_time: string;
   closing_time: string;
   display_order: number;
+  type: 'Kitchen' | 'Party Hall' | 'Restaurant';
 }
 
 const createCustomIcon = (color: string) => {
@@ -62,18 +63,15 @@ const createCustomIcon = (color: string) => {
   });
 };
 
-const getLocationColor = (name: string) => {
-  if (name.toLowerCase().includes('kitchen')) return "#ff6600";
-  if (name.toLowerCase().includes('hall')) return "#3b82f6";
-  if (name.toLowerCase().includes('restaurant')) return "#10b981";
+const getLocationColor = (type: string) => {
+  if (type === 'Kitchen') return "#ff6600";
+  if (type === 'Party Hall') return "#3b82f6";
+  if (type === 'Restaurant') return "#10b981";
   return "#6b7280";
 };
 
-const getLocationType = (name: string) => {
-  if (name.toLowerCase().includes('kitchen')) return "Kitchen";
-  if (name.toLowerCase().includes('hall')) return "Party Hall";
-  if (name.toLowerCase().includes('restaurant')) return "Restaurant";
-  return "Location";
+const getLocationType = (type: string) => {
+  return type;
 };
 
 const getTypeBadgeVariant = (type: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -118,7 +116,7 @@ const Locations = () => {
 
   const filteredLocations = activeFilter === "All"
     ? locationsWithCoordinates
-    : locationsWithCoordinates.filter(loc => getLocationType(loc.name) === activeFilter);
+    : locationsWithCoordinates.filter(loc => loc.type === activeFilter);
 
   const handleLocationClick = (location: Location) => {
     setSelectedLocation(location);
@@ -224,7 +222,7 @@ const Locations = () => {
                     <Marker
                       key={location.id}
                       position={[location.latitude, location.longitude]}
-                      icon={createCustomIcon(getLocationColor(location.name))}
+                      icon={createCustomIcon(getLocationColor(location.type))}
                       eventHandlers={{
                         click: () => handleLocationClick(location)
                       }}
@@ -232,8 +230,8 @@ const Locations = () => {
                       <Popup className="custom-popup">
                         <div className="p-2 min-w-[200px]">
                           <h4 className="font-semibold text-sm mb-2">{location.name}</h4>
-                          <Badge variant={getTypeBadgeVariant(getLocationType(location.name))} className="mb-3 text-xs">
-                            {getLocationType(location.name)}
+                          <Badge variant={getTypeBadgeVariant(location.type)} className="mb-3 text-xs">
+                            {location.type}
                           </Badge>
                           <div className="space-y-2 text-xs">
                             {phoneNumbers(location.phone).map((phone, idx) => (
@@ -288,7 +286,7 @@ const Locations = () => {
                     <div className="flex items-start gap-3">
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
-                        style={{ backgroundColor: getLocationColor(location.name) }}
+                        style={{ backgroundColor: getLocationColor(location.type) }}
                       >
                         <MapPin className="w-5 h-5 text-white" />
                       </div>
@@ -300,8 +298,8 @@ const Locations = () => {
                           </h4>
                         </div>
 
-                        <Badge variant={getTypeBadgeVariant(getLocationType(location.name))} className="mb-3">
-                          {getLocationType(location.name)}
+                        <Badge variant={getTypeBadgeVariant(location.type)} className="mb-3">
+                          {location.type}
                         </Badge>
 
                         <p className="text-xs text-muted-foreground mb-3">
