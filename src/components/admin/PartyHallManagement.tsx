@@ -29,11 +29,13 @@ import {
   deletePartyHall,
   PartyHall,
 } from '@/lib/partyHallService';
+import { useAuth } from '@/contexts/AuthContext';
 
 type PartyHallFormData = Omit<PartyHall, 'id'>;
 
 const PartyHallManagement = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHall, setEditingHall] = useState<PartyHall | null>(null);
   const [formData, setFormData] = useState<PartyHallFormData>({
@@ -53,7 +55,10 @@ const PartyHallManagement = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: createPartyHall,
+    mutationFn: (data: PartyHallFormData) => {
+      if (!user?.id) throw new Error('Admin not authenticated');
+      return createPartyHall(data, user.id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-party-halls'] });
       queryClient.invalidateQueries({ queryKey: ['party-halls'] });
@@ -66,8 +71,10 @@ const PartyHallManagement = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<PartyHall> }) =>
-      updatePartyHall(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<PartyHall> }) => {
+      if (!user?.id) throw new Error('Admin not authenticated');
+      return updatePartyHall(id, data, user.id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-party-halls'] });
       queryClient.invalidateQueries({ queryKey: ['party-halls'] });
@@ -80,7 +87,10 @@ const PartyHallManagement = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deletePartyHall,
+    mutationFn: (id: string) => {
+      if (!user?.id) throw new Error('Admin not authenticated');
+      return deletePartyHall(id, user.id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-party-halls'] });
       queryClient.invalidateQueries({ queryKey: ['party-halls'] });
