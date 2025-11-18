@@ -104,3 +104,46 @@ export const createBooking = async (bookingData: BookingData) => {
   if (error) throw error;
   return data;
 };
+
+// Admin functions
+export const fetchAllPartyHalls = async (): Promise<PartyHall[]> => {
+  const { data, error } = await supabase
+    .from('party_halls')
+    .select('*')
+    .order('display_order');
+
+  if (error) throw error;
+  return data || [];
+};
+
+export const createPartyHall = async (hallData: Omit<PartyHall, 'id'>) => {
+  const { data, error } = await supabase
+    .from('party_halls')
+    .insert(hallData)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const updatePartyHall = async (id: string, hallData: Partial<PartyHall>) => {
+  const { data, error } = await supabase
+    .from('party_halls')
+    .update(hallData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const deletePartyHall = async (id: string) => {
+  const { error } = await supabase
+    .from('party_halls')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+};
