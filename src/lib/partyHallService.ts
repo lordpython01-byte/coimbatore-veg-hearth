@@ -51,7 +51,7 @@ export const checkAvailability = async (
     .select('time_slots')
     .eq('hall_id', hallId)
     .eq('booking_date', bookingDate)
-    .in('approval_status', ['pending', 'approved']);
+    .eq('approval_status', 'approved');
 
   if (error) throw error;
 
@@ -74,7 +74,7 @@ export const checkAvailability = async (
           .select('time_slots')
           .eq('hall_id', hall.id)
           .eq('booking_date', bookingDate)
-          .in('approval_status', ['pending', 'approved']);
+          .eq('approval_status', 'approved');
 
         const hallBookedSlots = new Set<TimeSlot>();
         existingBookings?.forEach((booking: any) => {
@@ -103,7 +103,7 @@ export const getBookedSlots = async (
     .select('time_slots')
     .eq('hall_id', hallId)
     .eq('booking_date', bookingDate)
-    .in('approval_status', ['pending', 'approved']);
+    .eq('approval_status', 'approved');
 
   if (error) throw error;
 
