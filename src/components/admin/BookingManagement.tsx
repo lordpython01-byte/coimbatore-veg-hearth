@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Calendar, Users, Phone, Mail, CheckCircle, XCircle, MapPin } from 'lucide-react';
+import { Plus, Edit, Trash2, Calendar, Users, Phone, Mail, CheckCircle, XCircle, MapPin, Clock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PartyHall {
@@ -28,6 +28,7 @@ interface Booking {
   customer_phone: string;
   customer_email: string;
   booking_date: string;
+  time_slots: string[];
   purpose: string;
   event_type: string;
   guest_count: number;
@@ -188,6 +189,16 @@ const BookingManagement = () => {
                   <Calendar className="w-3 h-3" />
                   {new Date(booking.booking_date).toLocaleDateString()}
                 </p>
+                {booking.time_slots && booking.time_slots.length > 0 && (
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    <Clock className="w-3 h-3" />
+                    {booking.time_slots.map((slot) => (
+                      <Badge key={slot} variant="secondary" className="text-xs">
+                        {slot}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
                 <p className="flex items-center gap-1 mt-1">
                   <Users className="w-3 h-3" />
                   {booking.guest_count || 0} guests
