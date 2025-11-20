@@ -12,12 +12,15 @@ export interface PartyHall {
   display_order: number;
 }
 
+export type TimeSlot = 'morning' | 'evening' | 'night';
+
 export interface BookingData {
   hall_id: string;
   customer_name: string;
   customer_phone: string;
   customer_email?: string;
   booking_date: string;
+  time_slots: TimeSlot[];
   purpose: string;
   approval_status?: string;
 }
@@ -40,20 +43,27 @@ export const fetchPartyHalls = async (): Promise<PartyHall[]> => {
 
 export const checkAvailability = async (
   hallId: string,
-  bookingDate: string
+  bookingDate: string,
+  timeSlots: TimeSlot[]
 ): Promise<AvailabilityResult> => {
   const { data, error } = await supabase
     .from('party_hall_bookings')
-    .select('id')
+    .select('time_slots')
     .eq('hall_id', hallId)
     .eq('booking_date', bookingDate)
     .in('approval_status', ['pending', 'approved']);
 
   if (error) throw error;
 
-  const isAvailable = !data || data.length === 0;
+  // Check if all requested time slots are available
+  const bookedSlots = new Set<TimeSlot>();
+  data?.forEach((booking: any) => {
+    booking.time_slots?.forEach((slot: TimeSlot) => bookedSlots.add(slot));
+  });
 
-  if (!isAvailable) {
+  const hasConflict = timeSlots.some(slot => bookedSlots.has(slot));
+
+  if (hasConflict) {
     const allHalls = await fetchPartyHalls();
     const alternativeHalls: PartyHall[] = [];
 
@@ -61,12 +71,18 @@ export const checkAvailability = async (
       if (hall.id !== hallId) {
         const { data: existingBookings } = await supabase
           .from('party_hall_bookings')
-          .select('id')
+          .select('time_slots')
           .eq('hall_id', hall.id)
           .eq('booking_date', bookingDate)
           .in('approval_status', ['pending', 'approved']);
 
-        if (!existingBookings || existingBookings.length === 0) {
+        const hallBookedSlots = new Set<TimeSlot>();
+        existingBookings?.forEach((booking: any) => {
+          booking.time_slots?.forEach((slot: TimeSlot) => hallBookedSlots.add(slot));
+        });
+
+        const hallHasConflict = timeSlots.some(slot => hallBookedSlots.has(slot));
+        if (!hallHasConflict) {
           alternativeHalls.push(hall);
         }
       }
@@ -78,16 +94,25 @@ export const checkAvailability = async (
   return { isAvailable: true };
 };
 
-export const getBookedDates = async (hallId: string): Promise<string[]> => {
+export const getBookedSlots = async (
+  hallId: string,
+  bookingDate: string
+): Promise<TimeSlot[]> => {
   const { data, error } = await supabase
     .from('party_hall_bookings')
-    .select('booking_date')
+    .select('time_slots')
     .eq('hall_id', hallId)
+    .eq('booking_date', bookingDate)
     .in('approval_status', ['pending', 'approved']);
 
   if (error) throw error;
 
-  return data ? data.map((booking) => booking.booking_date) : [];
+  const bookedSlots = new Set<TimeSlot>();
+  data?.forEach((booking: any) => {
+    booking.time_slots?.forEach((slot: TimeSlot) => bookedSlots.add(slot));
+  });
+
+  return Array.from(bookedSlots);
 };
 
 export const createBooking = async (bookingData: BookingData) => {

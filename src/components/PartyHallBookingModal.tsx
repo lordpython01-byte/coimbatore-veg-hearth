@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { toast } from '@/hooks/use-toast';
-import { CalendarIcon, MapPin, Phone, ExternalLink } from 'lucide-react';
+import { CalendarIcon, MapPin, Phone, ExternalLink, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import {
   PartyHall,
   checkAvailability,
-  getBookedDates,
+  getBookedSlots,
   createBooking,
+  TimeSlot,
 } from '@/lib/partyHallService';
 import {
   Card,
@@ -22,20 +23,27 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface PartyHallBookingModalProps {
   selectedHall: PartyHall;
   onSuccess: () => void;
 }
 
+const TIME_SLOTS: { value: TimeSlot; label: string; time: string }[] = [
+  { value: 'morning', label: 'Morning', time: '6:00 AM - 12:00 PM' },
+  { value: 'evening', label: 'Evening', time: '12:00 PM - 6:00 PM' },
+  { value: 'night', label: 'Night', time: '6:00 PM - 12:00 AM' },
+];
+
 const PartyHallBookingModal = ({
   selectedHall,
   onSuccess,
 }: PartyHallBookingModalProps) => {
-  const [step, setStep] = useState<'date' | 'form' | 'alternatives'>('date');
+  const [step, setStep] = useState<'date' | 'slots' | 'form' | 'alternatives'>('date');
   const [date, setDate] = useState<Date>();
-  const [showCalendar, setShowCalendar] = useState(true);
-  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<TimeSlot[]>([]);
   const [alternativeHalls, setAlternativeHalls] = useState<PartyHall[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,23 +55,37 @@ const PartyHallBookingModal = ({
     purpose: '',
   });
 
-  useEffect(() => {
-    const loadBookedDates = async () => {
-      try {
-        const dates = await getBookedDates(selectedHall.id);
-        setBookedDates(dates);
-      } catch (error) {
-        console.error('Error loading booked dates:', error);
-      }
-    };
-    loadBookedDates();
-  }, [selectedHall.id]);
+  const handleDateSelect = async (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+    setDate(selectedDate);
+    setStep('slots');
+    
+    // Load booked slots for this date
+    try {
+      const slots = await getBookedSlots(selectedHall.id, format(selectedDate, 'yyyy-MM-dd'));
+      setBookedSlots(slots);
+      setSelectedSlots([]);
+    } catch (error) {
+      console.error('Error loading booked slots:', error);
+      setBookedSlots([]);
+    }
+  };
+
+  const handleSlotToggle = (slot: TimeSlot) => {
+    if (bookedSlots.includes(slot)) return; // Can't select booked slots
+    
+    setSelectedSlots(prev =>
+      prev.includes(slot)
+        ? prev.filter(s => s !== slot)
+        : [...prev, slot]
+    );
+  };
 
   const handleCheckAvailability = async () => {
-    if (!date) {
+    if (!date || selectedSlots.length === 0) {
       toast({
         title: 'Missing Information',
-        description: 'Please select a date',
+        description: 'Please select at least one time slot',
         variant: 'destructive',
       });
       return;
@@ -73,7 +95,8 @@ const PartyHallBookingModal = ({
     try {
       const result = await checkAvailability(
         selectedHall.id,
-        format(date, 'yyyy-MM-dd')
+        format(date, 'yyyy-MM-dd'),
+        selectedSlots
       );
 
       if (result.isAvailable) {
@@ -87,7 +110,7 @@ const PartyHallBookingModal = ({
         setStep('alternatives');
         toast({
           title: 'Not Available',
-          description: `${selectedHall.name} is already booked on ${format(date, 'PPP')}`,
+          description: `Some selected time slots are already booked`,
           variant: 'destructive',
         });
       }
@@ -105,10 +128,10 @@ const PartyHallBookingModal = ({
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!date) {
+    if (!date || selectedSlots.length === 0) {
       toast({
         title: 'Missing Information',
-        description: 'Please select a date',
+        description: 'Please select date and time slots',
         variant: 'destructive',
       });
       return;
@@ -119,6 +142,7 @@ const PartyHallBookingModal = ({
       await createBooking({
         hall_id: selectedHall.id,
         booking_date: format(date, 'yyyy-MM-dd'),
+        time_slots: selectedSlots,
         ...formData,
       });
 
@@ -140,262 +164,242 @@ const PartyHallBookingModal = ({
     }
   };
 
-  const isDateBooked = (checkDate: Date) => {
-    const dateStr = format(checkDate, 'yyyy-MM-dd');
-    return bookedDates.includes(dateStr);
-  };
-
   return (
     <div className="space-y-6">
-      <div className="bg-muted/50 p-4 rounded-lg">
-        <h3 className="font-semibold text-lg mb-2">{selectedHall.name}</h3>
-        <div className="space-y-1 text-sm">
-          <p className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            {selectedHall.location}
-          </p>
-          <p className="flex items-center gap-2 text-muted-foreground">
-            <Phone className="w-4 h-4" />
-            {selectedHall.phone}
-          </p>
-          <p className="text-muted-foreground">
-            Capacity: {selectedHall.capacity_min}-{selectedHall.capacity_max}{' '}
-            guests
-          </p>
-          {selectedHall.maps_url && (
-            <a
-              href={selectedHall.maps_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
-            >
-              <ExternalLink className="w-4 h-4" />
-              View on Google Maps
-            </a>
-          )}
-        </div>
-      </div>
-
-      {step === 'date' && (
-        <div className="space-y-4">
-          <div>
-            <Label className="mb-2 block">Select Date</Label>
-            <Button
-              variant="outline"
-              className={cn(
-                'w-full justify-start text-left font-normal',
-                !date && 'text-muted-foreground'
-              )}
-              onClick={() => setShowCalendar(!showCalendar)}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, 'PPP') : <span>Pick a date</span>}
-            </Button>
-            {showCalendar && (
-              <div className="border rounded-lg p-3 bg-background mt-2">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(selectedDate) => {
-                    setDate(selectedDate);
-                  }}
-                  disabled={(checkDate) =>
-                    checkDate < new Date() || isDateBooked(checkDate)
-                  }
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-                {bookedDates.length > 0 && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Dates with existing bookings are disabled
-                  </p>
-                )}
-              </div>
+      {/* Hall Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>{selectedHall.name}</span>
+            <Badge variant="secondary">
+              Capacity: {selectedHall.capacity_min}-{selectedHall.capacity_max}
+            </Badge>
+          </CardTitle>
+          <CardDescription className="space-y-2">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              <span>{selectedHall.location}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              <span>{selectedHall.phone}</span>
+            </div>
+            {selectedHall.maps_url && (
+              <a
+                href={selectedHall.maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-primary hover:underline"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>View on Map</span>
+              </a>
             )}
-          </div>
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
-          <Button
-            onClick={handleCheckAvailability}
-            className="w-full"
-            disabled={!date || isChecking}
-          >
-            {isChecking ? 'Checking...' : 'Check Availability'}
-          </Button>
-        </div>
+      {/* Step 1: Date Selection */}
+      {step === 'date' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5" />
+              Select Date
+            </CardTitle>
+            <CardDescription>Choose your preferred date for the event</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={handleDateSelect}
+                disabled={(date) => date < new Date()}
+                className="rounded-md border"
+              />
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {step === 'alternatives' && (
-        <div className="space-y-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h4 className="font-semibold text-red-900 mb-2">
-              Hall Not Available
-            </h4>
-            <p className="text-sm text-red-700">
-              {selectedHall.name} is already booked on {date && format(date, 'PPP')}.
-              Please try one of these available halls:
-            </p>
-          </div>
+      {/* Step 2: Time Slot Selection */}
+      {step === 'slots' && date && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Select Time Slots
+            </CardTitle>
+            <CardDescription>
+              Selected Date: {format(date, 'PPP')} - Choose one or more time slots
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4">
+              {TIME_SLOTS.map((slot) => {
+                const isBooked = bookedSlots.includes(slot.value);
+                const isSelected = selectedSlots.includes(slot.value);
 
-          {alternativeHalls.length > 0 ? (
-            <div className="space-y-3">
-              {alternativeHalls.map((hall) => (
-                <Card key={hall.id} className="border-2 border-green-200">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center justify-between">
-                      {hall.name}
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
-                        Available
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      <div className="space-y-1 text-xs">
-                        <p className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {hall.location}
-                        </p>
-                        <p className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          {hall.phone}
-                        </p>
-                        <p>
-                          Capacity: {hall.capacity_min}-{hall.capacity_max} guests
-                        </p>
+                return (
+                  <div
+                    key={slot.value}
+                    onClick={() => !isBooked && handleSlotToggle(slot.value)}
+                    className={cn(
+                      'flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all',
+                      isBooked && 'bg-destructive/10 border-destructive cursor-not-allowed opacity-60',
+                      !isBooked && isSelected && 'bg-primary/10 border-primary',
+                      !isBooked && !isSelected && 'bg-muted/30 border-border hover:border-primary/50'
+                    )}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      disabled={isBooked}
+                      className="pointer-events-none"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold">{slot.label}</h4>
+                        {isBooked ? (
+                          <Badge variant="destructive">Booked</Badge>
+                        ) : (
+                          <Badge variant="secondary">Available</Badge>
+                        )}
                       </div>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      onClick={() => {
-                        window.location.reload();
-                      }}
-                    >
-                      Book {hall.name}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                      <p className="text-sm text-muted-foreground">{slot.time}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-800">
-                Unfortunately, all halls are booked on this date. Please select a
-                different date.
-              </p>
-            </div>
-          )}
 
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => {
-              setStep('date');
-              setDate(undefined);
-              setAlternativeHalls([]);
-            }}
-          >
-            Try Different Date
-          </Button>
-        </div>
+            <div className="flex gap-2 justify-between pt-4">
+              <Button variant="outline" onClick={() => setStep('date')}>
+                Back
+              </Button>
+              <Button
+                onClick={handleCheckAvailability}
+                disabled={selectedSlots.length === 0 || isChecking}
+              >
+                {isChecking ? 'Checking...' : 'Continue'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {step === 'form' && (
-        <form onSubmit={handleSubmitBooking} className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <p className="text-sm text-green-800 font-medium">
-              Hall is available on {date && format(date, 'PPP')}
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="customer_name">
-              Full Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="customer_name"
-              value={formData.customer_name}
-              onChange={(e) =>
-                setFormData({ ...formData, customer_name: e.target.value })
-              }
-              required
-              placeholder="Enter your full name"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="customer_phone">
-              Phone Number <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="customer_phone"
-              type="tel"
-              value={formData.customer_phone}
-              onChange={(e) =>
-                setFormData({ ...formData, customer_phone: e.target.value })
-              }
-              required
-              placeholder="Enter your phone number"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="customer_email">
-              Email Address <span className="text-muted-foreground text-xs">(Optional)</span>
-            </Label>
-            <Input
-              id="customer_email"
-              type="email"
-              value={formData.customer_email}
-              onChange={(e) =>
-                setFormData({ ...formData, customer_email: e.target.value })
-              }
-              placeholder="Enter your email"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="purpose">
-              Purpose of Booking <span className="text-red-500">*</span>
-            </Label>
-            <Textarea
-              id="purpose"
-              value={formData.purpose}
-              onChange={(e) =>
-                setFormData({ ...formData, purpose: e.target.value })
-              }
-              required
-              placeholder="e.g., Birthday party, Wedding reception, Corporate event"
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-1/3"
-              onClick={() => {
-                setStep('date');
-                setFormData({
-                  customer_name: '',
-                  customer_phone: '',
-                  customer_email: '',
-                  purpose: '',
-                });
-              }}
-            >
-              Back
+      {/* Step 3: Alternative Halls */}
+      {step === 'alternatives' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Alternative Party Halls</CardTitle>
+            <CardDescription>
+              {alternativeHalls.length > 0
+                ? 'These halls are available on your selected date and time'
+                : 'No alternative halls available for selected time slots'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {alternativeHalls.map((hall) => (
+              <Card key={hall.id} className="cursor-pointer hover:border-primary">
+                <CardHeader>
+                  <CardTitle className="text-lg">{hall.name}</CardTitle>
+                  <CardDescription className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>{hall.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      <span>{hall.phone}</span>
+                    </div>
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+            <Button variant="outline" onClick={() => setStep('slots')} className="w-full">
+              Back to Time Slots
             </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Booking'}
-            </Button>
-          </div>
-        </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 4: Booking Form */}
+      {step === 'form' && date && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Complete Your Booking</CardTitle>
+            <CardDescription>
+              {format(date, 'PPP')} - {selectedSlots.map(s => TIME_SLOTS.find(ts => ts.value === s)?.label).join(', ')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmitBooking} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="customer_name">Full Name *</Label>
+                <Input
+                  id="customer_name"
+                  required
+                  value={formData.customer_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customer_name: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customer_phone">Phone Number *</Label>
+                <Input
+                  id="customer_phone"
+                  type="tel"
+                  required
+                  value={formData.customer_phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customer_phone: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customer_email">Email</Label>
+                <Input
+                  id="customer_email"
+                  type="email"
+                  value={formData.customer_email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, customer_email: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="purpose">Purpose of Event *</Label>
+                <Textarea
+                  id="purpose"
+                  required
+                  value={formData.purpose}
+                  onChange={(e) =>
+                    setFormData({ ...formData, purpose: e.target.value })
+                  }
+                  placeholder="e.g., Birthday party, Wedding reception, Corporate event"
+                />
+              </div>
+
+              <div className="flex gap-2 justify-between pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep('slots')}
+                >
+                  Back
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Submitting...' : 'Submit Booking'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
